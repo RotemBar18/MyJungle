@@ -6,7 +6,8 @@ dev-dist
 .firebase
 *.log
 
-# Personal plant photos from the original tracker. The app reads them at
-# public/seed/ for the one-time import; they are yours, not the project's, so
-# they stay out of this public repo. See README (Importing your own data).
+# Personal plant photos from the original tracker. They are demo data for one
+# person's home, not part of the product, so they are neither committed nor
+# shipped. Drop them into public/seed/ to import with pictures — see README.
+seed-photos/
 public/seed/*.jpg

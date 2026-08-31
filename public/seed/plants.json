@@ -9,8 +9,7 @@
   "notes": "צמח נשפך/מטפס. להימנע מאדמה רטובה קבועה.",
   "id": "p01",
   "waterMinDays": 8,
-  "waterMaxDays": 14,
-  "photo": "seed/p01.jpg"
+  "waterMaxDays": 14
  },
  {
   "name": "היפואסטס ורוד",
@@ -22,8 +21,7 @@
   "notes": "אוהב לחות עקבית. צביטה מעודדת הסתעפות.",
   "id": "p02",
   "waterMinDays": 3,
-  "waterMaxDays": 6,
-  "photo": "seed/p02.jpg"
+  "waterMaxDays": 6
  },
  {
   "name": "קקטוס קטן + חוטר",
@@ -35,8 +33,7 @@
   "notes": "מין מדויק לא אושר. עדיף מצע קקטוסים מנוקז מאוד.",
   "id": "p03",
   "waterMinDays": 18,
-  "waterMaxDays": 35,
-  "photo": "seed/p03.jpg"
+  "waterMaxDays": 35
  },
  {
   "name": "קרסולה גבוהה",
@@ -48,8 +45,7 @@
   "notes": "עץ הכסף. השקיה עמוקה ואז ייבוש.",
   "id": "p04",
   "waterMinDays": 12,
-  "waterMaxDays": 25,
-  "photo": "seed/p04.jpg"
+  "waterMaxDays": 25
  },
  {
   "name": "סדום נשפך",
@@ -61,8 +57,7 @@
   "notes": "עלים עדינים ונושרים בקלות. לא להשקות בתדירות קבועה אם המצע עדיין לח.",
   "id": "p05",
   "waterMinDays": 12,
-  "waterMaxDays": 25,
-  "photo": "seed/p05.jpg"
+  "waterMaxDays": 25
  },
  {
   "name": "אאוניום ירוק",
@@ -74,8 +69,7 @@
   "notes": "המין המדויק לא אושר.",
   "id": "p06",
   "waterMinDays": 10,
-  "waterMaxDays": 20,
-  "photo": "seed/p06.jpg"
+  "waterMaxDays": 20
  },
  {
   "name": "גסטריה מנומרת + חוטרים",
@@ -87,8 +81,7 @@
   "notes": "חוטרים צעירים מסביב לצמח האם.",
   "id": "p07",
   "waterMinDays": 14,
-  "waterMaxDays": 28,
-  "photo": "seed/p07.jpg"
+  "waterMaxDays": 28
  },
  {
   "name": "ייחור בגוניה מנוקדת",
@@ -100,8 +93,7 @@
   "notes": "ייחור מושרש במים. לעקוב אחרי אורך שורשים ומצב עלים.",
   "id": "p08",
   "waterMinDays": 5,
-  "waterMaxDays": 8,
-  "photo": "seed/p08.jpg"
+  "waterMaxDays": 8
  },
  {
   "name": "פיקוס אודרי",
@@ -113,8 +105,7 @@
   "notes": "להימנע משינויים חדים במיקום והשקיית יתר.",
   "id": "p09",
   "waterMinDays": 7,
-  "waterMaxDays": 14,
-  "photo": "seed/p09.jpg"
+  "waterMaxDays": 14
  },
  {
   "name": "פוטוס ירוק – ייחור #1",
@@ -126,8 +117,7 @@
   "notes": "ייחור במים.",
   "id": "p10",
   "waterMinDays": 5,
-  "waterMaxDays": 8,
-  "photo": "seed/p10.jpg"
+  "waterMaxDays": 8
  },
  {
   "name": "קולאוס – ייחור #1",
@@ -139,8 +129,7 @@
   "notes": "ייחור קולאוס. ניתן להעביר לאדמה כשהשורשים מפותחים.",
   "id": "p11",
   "waterMinDays": 4,
-  "waterMaxDays": 7,
-  "photo": "seed/p11.jpg"
+  "waterMaxDays": 7
  },
  {
   "name": "קולאוס אחרי גיזום",
@@ -152,8 +141,7 @@
   "notes": "צמח שעבר גיזום חזק. לעקוב אחר יציאת ענפים חדשים וחיזוק הגבעול.",
   "id": "p12",
   "waterMinDays": 3,
-  "waterMaxDays": 6,
-  "photo": "seed/p12.jpg"
+  "waterMaxDays": 6
  },
  {
   "name": "פוטוס Marble Queen – ייחור",
@@ -165,8 +153,7 @@
   "notes": "וריאגציה גבוהה – דורש אור טוב לשמירת הצבע.",
   "id": "p13",
   "waterMinDays": 5,
-  "waterMaxDays": 8,
-  "photo": "seed/p13.jpg"
+  "waterMaxDays": 8
  },
  {
   "name": "סנסיווריה",
@@ -178,8 +165,7 @@
   "notes": "רגישה לעודף מים יותר מחוסר מים.",
   "id": "p14",
   "waterMinDays": 18,
-  "waterMaxDays": 35,
-  "photo": "seed/p14.jpg"
+  "waterMaxDays": 35
  },
  {
   "name": "קרסולה קטנה וצפופה",
@@ -191,8 +177,7 @@
   "notes": "צמח נוסף של עץ הכסף.",
   "id": "p15",
   "waterMinDays": 12,
-  "waterMaxDays": 25,
-  "photo": "seed/p15.jpg"
+  "waterMaxDays": 25
  },
  {
   "name": "קולאוס צבעוני גדול",
@@ -204,8 +189,7 @@
   "notes": "צביטה/גיזום עדין שומרים עליו מסועף וצפוף.",
   "id": "p16",
   "waterMinDays": 3,
-  "waterMaxDays": 6,
-  "photo": "seed/p16.jpg"
+  "waterMaxDays": 6
  },
  {
   "name": "קולאוס – ייחור #2",
@@ -217,8 +201,7 @@
   "notes": "ייחור נוסף במים.",
   "id": "p17",
   "waterMinDays": 4,
-  "waterMaxDays": 7,
-  "photo": "seed/p17.jpg"
+  "waterMaxDays": 7
  },
  {
   "name": "ZZ אחרי שיקום",
@@ -230,8 +213,7 @@
   "notes": "עבר גיזום/שיקום; לעקוב אחרי חניתות חדשות ולא למהר להשקות.",
   "id": "p18",
   "waterMinDays": 18,
-  "waterMaxDays": 35,
-  "photo": "seed/p18.jpg"
+  "waterMaxDays": 35
  },
  {
   "name": "ממילריה פורחת",
@@ -243,8 +225,7 @@
   "notes": "קקטוס עם פריחה ורודה. המין המדויק לא אושר.",
   "id": "p19",
   "waterMinDays": 18,
-  "waterMaxDays": 35,
-  "photo": "seed/p19.jpg"
+  "waterMaxDays": 35
  },
  {
   "name": "סקינדפסוס כסוף #2",
@@ -256,8 +237,7 @@
   "notes": "ייתכן שזה אותו צמח מתמונה אחרת; אפשר למזג או למחוק אם זו כפילות.",
   "id": "p20",
   "waterMinDays": 8,
-  "waterMaxDays": 14,
-  "photo": "seed/p20.jpg"
+  "waterMaxDays": 14
  },
  {
   "name": "סקינדפסוס כסוף – ייחור",
@@ -269,8 +249,7 @@
   "notes": "ייחור במים.",
   "id": "p21",
   "waterMinDays": 5,
-  "waterMaxDays": 8,
-  "photo": "seed/p21.jpg"
+  "waterMaxDays": 8
  },
  {
   "name": "פוטוס ירוק – ייחור #2",
@@ -282,8 +261,7 @@
   "notes": "קבוצת ייחורים במים.",
   "id": "p22",
   "waterMinDays": 5,
-  "waterMaxDays": 8,
-  "photo": "seed/p22.jpg"
+  "waterMaxDays": 8
  },
  {
   "name": "פוטוס ירוק בוגר",
@@ -295,7 +273,6 @@
   "notes": "פוטוס בוגר ונשפך. אפשר למדוד אורך גבעול ארוך כמדד צמיחה.",
   "id": "p23",
   "waterMinDays": 7,
-  "waterMaxDays": 14,
-  "photo": "seed/p23.jpg"
+  "waterMaxDays": 14
  }
 ]

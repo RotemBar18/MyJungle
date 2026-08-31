@@ -180,25 +180,30 @@ function fieldsFor(type, plant) {
 }
 
 /** Profile updates that must follow certain events so the card stays truthful. */
-function plantPatchFor(type, data, plant) {
+function plantPatchFor(type, data, plant, photos = []) {
+  // A plant with no picture yet adopts the first photo attached to any event, so
+  // the card and hero stop showing a placeholder without a trip to the edit form.
+  const adopt = !plant.photo?.url && photos[0]?.url ? { photo: photos[0] } : null;
+  const withPhoto = (patch) => (adopt || patch ? { ...adopt, ...patch } : null);
+
   switch (type) {
     case 'move':
-      return { room: data.toRoom ?? plant.room, location: data.toLocation ?? plant.location };
+      return withPhoto({ room: data.toRoom ?? plant.room, location: data.toLocation ?? plant.location });
     case 'repot':
-      return {
+      return withPhoto({
         pot: { ...plant.pot, sizeCm: data.toSizeCm ?? plant.pot.sizeCm },
         substrate: data.toSubstrate || plant.substrate,
-      };
+      });
     case 'soilChange':
-      return { substrate: data.toSubstrate || plant.substrate };
+      return withPhoto({ substrate: data.toSubstrate || plant.substrate });
     case 'rooted':
-      return { propagation: { ...(plant.propagation || {}), outcome: 'rooted' } };
+      return withPhoto({ propagation: { ...(plant.propagation || {}), outcome: 'rooted' } });
     case 'potted':
-      return { medium: 'soil', propagation: { ...(plant.propagation || {}), outcome: 'potted' } };
+      return withPhoto({ medium: 'soil', propagation: { ...(plant.propagation || {}), outcome: 'potted' } });
     case 'status':
-      return data.status ? { status: data.status } : null;
+      return withPhoto(data.status ? { status: data.status } : null);
     default:
-      return null;
+      return withPhoto(null);
   }
 }
 
@@ -268,7 +273,7 @@ export function EventSheet({ open, onClose, plant, type: initialType, issue, onS
       eventId,
     );
 
-    const patch = plantPatchFor(type, clean, plant);
+    const patch = plantPatchFor(type, clean, plant, uploaded);
     if (patch) await store.savePlant(plant.id, patch);
 
     photos.forEach((p) => p.preview && URL.revokeObjectURL(p.preview));

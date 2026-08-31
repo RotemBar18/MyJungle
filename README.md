@@ -76,11 +76,16 @@ Open <http://localhost:5173>, sign in with Google, then go to
 **Settings → Import from the old tracker → Import my old collection**.
 That brings in the 23 plants. Running it twice changes nothing.
 
-**Importing your own data.** `public/seed/plants.json` ships in this repo, but the
-photos it references do not — they are personal, and this repo is public. To import
-with photos, either drop the `pXX.jpg` files into `public/seed/` before running the
-import, or use **"Or choose an exported file"** and pick your original
-`plant_tracker.html`, which still has every photo embedded in it.
+**About the photos.** The import brings in the 23 plants with their names, species,
+care rules and notes — but no pictures. The original photos were one person's home
+and were only ever there to make the idea legible; they are not part of the product
+and are not shipped or committed. **Photos are yours to add**: tap 📷 on any plant,
+or attach one to any entry you log. The first photo a plant receives automatically
+becomes its main picture.
+
+If you *do* want to import with the original images, drop the `pXX.jpg` files into
+`public/seed/` before running the import, or use **"Or choose an exported file"** and
+pick the original `plant_tracker.html` — every photo is still embedded in it.
 
 ### 6. Put it online
 
@@ -120,8 +125,7 @@ myJungle/
 ├── storage.rules              who can read/write which photo
 ├── .env.example               the keys to copy into .env
 ├── public/
-│   ├── seed/                  the 23 plants from the old tracker (plants.json;
-│   │                          the photos are git-ignored — see below)
+│   ├── seed/plants.json       the 23 plants from the old tracker (no photos)
 │   └── icon-*.png             home-screen icons
 └── src/
     ├── main.jsx               entry point
