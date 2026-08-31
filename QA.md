@@ -131,9 +131,27 @@ Also added while here: a top-level error boundary, so a render error costs one r
 5. **Multi-device sync in the wild.** Verified across two accounts and two jungles in one browser against a real Firestore backend; not yet across two physical devices.
 6. **Long-horizon behaviour.** The learned watering window switches from your configured rule to this plant's own median after four observed intervals. I tested it with synthetic backdated history; it will show its real value after a couple of months of actual logging.
 
-## Deployed so far to `myjungle-68907`
+## Deployed to `myjungle-68907`
 
 - ✅ Firestore database created (default)
 - ✅ `firestore.rules` deployed
-- ⬜ `storage.rules` — blocked on Storage not being set up
+- ✅ Billing linked (Blaze) — required before a Storage bucket can exist
+- ✅ Budget: **₪4/month** (~$1, the billing account is in ILS), scoped to this
+  project, alerting at 50% / 90% / 100%. Note that a Google budget *alerts*; it
+  does not hard-stop spending.
+- ✅ Cloud Storage default bucket `myjungle-68907.firebasestorage.app` created in
+  **europe-west1**, matching the Firestore region
+- ✅ `storage.rules` deployed — verified: an unauthenticated request to the bucket
+  returns **403** (it returned 404 before the bucket existed)
+- ✅ Source pushed to <https://github.com/RotemBar18/MyJungle> — verified from the
+  public internet that `.env` and `public/seed/*.jpg` are **not** there (both 404)
 - ⬜ Hosting — not deployed yet
+
+## Storage: what is and is not verified
+
+The bucket exists, is in the right region, and its rules are live and denying
+anonymous access. What has **not** been exercised against the real project is an
+actual signed-in upload, because that needs a completed Google sign-in, which the
+automated browser cannot do. The identical upload path was exercised end to end
+against the Storage emulator with these same rules (test 19: 135 KB → 21 KB, stored
+and rendered). First real photo you add will confirm it.
