@@ -145,7 +145,11 @@ Also added while here: a top-level error boundary, so a render error costs one r
   returns **403** (it returned 404 before the bucket existed)
 - ✅ Source pushed to <https://github.com/RotemBar18/MyJungle> — verified from the
   public internet that `.env` and `public/seed/*.jpg` are **not** there (both 404)
-- ⬜ Hosting — not deployed yet
+- ✅ Hosting deployed — <https://myjungle-68907.web.app>. Verified live: index, `sw.js`
+  and `manifest.webmanifest` all serve with correct MIME types, deep routes fall back
+  to index.html, and the site loads with a clean console against the real project.
+- ✅ `myjungle-68907.web.app` is already in Firebase Auth's authorised domains, so
+  Google sign-in will work from the live URL with no extra configuration.
 
 ## Storage: what is and is not verified
 
