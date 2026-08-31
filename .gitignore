@@ -1,0 +1,12 @@
+node_modules
+dist
+dev-dist
+.env
+.env.local
+.firebase
+*.log
+
+# Personal plant photos from the original tracker. The app reads them at
+# public/seed/ for the one-time import; they are yours, not the project's, so
+# they stay out of this public repo. See README (Importing your own data).
+public/seed/*.jpg

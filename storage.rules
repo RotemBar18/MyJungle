@@ -1,0 +1,27 @@
+rules_version = '2';
+
+// Photos live at jungles/{jid}/plants/{plantId}/{photoId}.jpg.
+// Access is decided by the same membership documents Firestore uses, so sharing
+// a jungle shares its photos and leaving it revokes them — there is no second,
+// drifting copy of the permission model.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isMember(jid) {
+      return request.auth != null
+        && firestore.exists(/databases/(default)/documents/jungles/$(jid)/members/$(request.auth.uid));
+    }
+
+    match /jungles/{jid}/{allPaths=**} {
+      allow read: if isMember(jid);
+      allow write: if isMember(jid)
+        && request.resource.size < 8 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if isMember(jid);
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

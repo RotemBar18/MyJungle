@@ -1,0 +1,131 @@
+rules_version = '2';
+
+// myJungle security model
+// ----------------------------------------------------------------------------
+// A "jungle" is the unit of sharing. Its membership list is the single source of
+// truth for access: every rule below asks whether the caller has a document at
+// jungles/{jid}/members/{uid}. Nothing is authorised by client-side filtering.
+//
+//   users/{uid}                    private to that person
+//   jungles/{jid}                  readable by members
+//   jungles/{jid}/members/{uid}    who may see the jungle
+//   jungles/{jid}/plants/{id}      the collection
+//   jungles/{jid}/events/{id}      the history
+//   invites/{code}                 readable only if you know the code (= the id)
+//
+// Joining is deliberately the only write that a non-member may perform, it can
+// only create that person's *own* membership, and only while holding a live
+// invite code that names this jungle.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function memberPath(jid) {
+      return /databases/$(database)/documents/jungles/$(jid)/members/$(request.auth.uid);
+    }
+
+    function isMember(jid) {
+      return signedIn() && exists(memberPath(jid));
+    }
+
+    function isOwner(jid) {
+      return isMember(jid) && get(memberPath(jid)).data.role == 'owner';
+    }
+
+    function invitePath(code) {
+      return /databases/$(database)/documents/invites/$(code);
+    }
+
+    function shortText(v, max) {
+      return !(v is string) || v.size() <= max;
+    }
+
+    // ---------------------------------------------------------------- profile
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // ---------------------------------------------------------------- invites
+    // `get` only: you have to know the unguessable code, and listing is closed,
+    // so codes cannot be enumerated.
+    match /invites/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.createdBy == request.auth.uid
+        && isMember(request.resource.data.jungleId);
+      allow update, delete: if signedIn()
+        && (resource.data.createdBy == request.auth.uid || isOwner(resource.data.jungleId));
+    }
+
+    // ---------------------------------------------------------------- jungles
+    match /jungles/{jid} {
+      allow get, list: if isMember(jid);
+      // The creator must name themselves as owner; their membership document is
+      // written straight after (see members rules below).
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if isMember(jid) && request.resource.data.ownerUid == resource.data.ownerUid;
+      allow delete: if isOwner(jid);
+
+      match /members/{memberUid} {
+        // Members see the whole list. Anyone signed in may read *their own*
+        // membership document — that is how the join flow checks whether it has
+        // already happened, and it discloses nothing they do not already know.
+        allow get: if signedIn() && (request.auth.uid == memberUid || isMember(jid));
+        allow list: if isMember(jid);
+
+        allow create: if signedIn()
+          && request.auth.uid == memberUid
+          && request.resource.data.uid == request.auth.uid
+          && (
+            // the founder claiming ownership of the jungle they just created
+            (request.resource.data.role == 'owner'
+              && get(/databases/$(database)/documents/jungles/$(jid)).data.ownerUid == request.auth.uid)
+            ||
+            // someone joining with a live invite that names this jungle
+            (request.resource.data.role == 'member'
+              && exists(invitePath(request.resource.data.inviteCode))
+              && get(invitePath(request.resource.data.inviteCode)).data.jungleId == jid
+              && get(invitePath(request.resource.data.inviteCode)).data.active == true)
+          );
+
+        // Leave on your own, or be removed by the owner.
+        allow delete: if signedIn() && (request.auth.uid == memberUid || isOwner(jid));
+        // You may refresh your own name/avatar, but never your own role.
+        allow update: if isOwner(jid)
+          || (signedIn()
+              && request.auth.uid == memberUid
+              && request.resource.data.role == resource.data.role);
+      }
+
+      // -------------------------------------------------------------- plants
+      match /plants/{plantId} {
+        allow read, delete: if isMember(jid);
+        allow create, update: if isMember(jid)
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 200
+          && shortText(request.resource.data.get('notes', ''), 20000);
+      }
+
+      // -------------------------------------------------------------- history
+      match /events/{eventId} {
+        allow read, delete: if isMember(jid);
+        allow create, update: if isMember(jid)
+          && request.resource.data.plantId is string
+          && request.resource.data.type is string
+          && request.resource.data.at is timestamp
+          && shortText(request.resource.data.get('note', ''), 20000);
+      }
+    }
+
+    // Everything else is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
