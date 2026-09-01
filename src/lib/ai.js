@@ -121,6 +121,47 @@ function countRequest() {
 export const FREE_DAILY_LIMIT = { gemini: 250, openai: null, anthropic: null };
 
 const MODELS_KEY = 'myjungle.ai.models';
+const BLOCKED_KEY = 'myjungle.ai.blocked';
+
+/**
+ * Models this key has actually been refused for, learned rather than listed.
+ *
+ * Which models a key may use is not something the catalogue tells us — Gemini
+ * lists every model, then refuses the ones with no free-tier allowance. Rather
+ * than hard-code a list that will be wrong within a release, remember what was
+ * refused and say so in the picker.
+ *
+ * Scoped to the key (entitlements differ between keys) and to the day (quota
+ * resets, so a refusal is not permanent).
+ */
+const keyPrint = (apiKey) => String(apiKey).slice(-8);
+
+export function readBlocked(provider, apiKey) {
+  const today = new Date().toISOString().slice(0, 10);
+  try {
+    const v = JSON.parse(localStorage.getItem(BLOCKED_KEY) || '{}');
+    if (v.provider !== provider || v.print !== keyPrint(apiKey) || v.date !== today) return {};
+    return v.models || {};
+  } catch {
+    return {};
+  }
+}
+
+function markBlocked(provider, apiKey, model, reason) {
+  const today = new Date().toISOString().slice(0, 10);
+  const models = { ...readBlocked(provider, apiKey), [model]: reason };
+  try {
+    localStorage.setItem(
+      BLOCKED_KEY,
+      JSON.stringify({ provider, print: keyPrint(apiKey), date: today, models }),
+    );
+  } catch {
+    /* private mode */
+  }
+  window.dispatchEvent(new CustomEvent(AI_BLOCKED_EVENT, { detail: models }));
+}
+
+export const AI_BLOCKED_EVENT = 'myjungle:ai-blocked';
 
 export function saveModelList(provider, list) {
   try {
@@ -206,6 +247,7 @@ export async function chat({ system, prompt, history = [], image, json = false, 
     // Providers retire models. When one names its replacement, switch to it and
     // try again rather than handing the owner a dead end — once only, so a
     // provider that keeps redirecting cannot loop.
+    if (err instanceof AiError && err.key === 'ai.errors.badModel') markBlocked(provider, apiKey, model, 'retired');
     if (err instanceof AiError && err.suggestedModel && err.suggestedModel !== model && !_retried) {
       saveAiSettings({ ...settings, model: err.suggestedModel });
       return chat({ system, prompt, history, image, json, signal, _retried: true });
@@ -214,8 +256,10 @@ export async function chat({ system, prompt, history = [], image, json = false, 
     // no free allowance, not that the day's requests are spent. Try the models
     // that do, in order, before telling the owner they are out.
     if (err instanceof AiError && err.key === 'ai.errors.rateLimit') {
+      markBlocked(provider, apiKey, model, 'quota');
       const tried = Array.isArray(_retried) ? _retried : [];
-      const next = quotaFallbacks(provider, model).find((m) => !tried.includes(m));
+      const refused = readBlocked(provider, apiKey);
+      const next = quotaFallbacks(provider, model).find((m) => !tried.includes(m) && !refused[m]);
       if (next) {
         saveAiSettings({ ...settings, model: next });
         return chat({

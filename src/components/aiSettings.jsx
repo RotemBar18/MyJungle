@@ -11,6 +11,8 @@ import {
   listModels,
   AiError,
   AI_SETTINGS_EVENT,
+  AI_BLOCKED_EVENT,
+  readBlocked,
   emptyAiSettings,
   readUsage,
   FREE_DAILY_LIMIT,
@@ -207,6 +209,7 @@ export function AiPanel() {
   const [modelsError, setModelsError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
+  const [blocked, setBlocked] = useState(() => readBlocked(ai.provider, ai.apiKey));
 
   const provider = PROVIDERS[ai.provider];
   const key = ai.apiKey.trim();
@@ -253,6 +256,14 @@ export function AiPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, ai.provider]);
 
+  // The app learns which models this key is refused for; reflect that here.
+  useEffect(() => {
+    const refresh = () => setBlocked(readBlocked(ai.provider, ai.apiKey));
+    refresh();
+    window.addEventListener(AI_BLOCKED_EVENT, refresh);
+    return () => window.removeEventListener(AI_BLOCKED_EVENT, refresh);
+  }, [ai.provider, ai.apiKey]);
+
   const runTest = async () => {
     setBusy(true);
     setResult(null);
@@ -268,8 +279,15 @@ export function AiPanel() {
   };
 
   // Never render an empty select: fall back to whatever is currently saved.
+  // Models this key was refused for sink to the bottom and say why, so the list
+  // stops being a set of options that silently fail.
   const modelOptions = models.length
-    ? models.map((m) => ({ value: m, label: m }))
+    ? [...models]
+        .sort((a, b) => (blocked[a] ? 1 : 0) - (blocked[b] ? 1 : 0))
+        .map((m) => ({
+          value: m,
+          label: blocked[m] ? `${m} — ${t(`ai.blocked.${blocked[m]}`)}` : m,
+        }))
     : [{ value: ai.model, label: ai.model }];
 
   const modelHint = !key
@@ -373,6 +391,7 @@ export function AiPanel() {
 
       <div className="col" style={{ gap: 8, marginBlockStart: 12 }}>
         {provider.free && <p className="tiny muted">🌱 {t('ai.freeNote')}</p>}
+        {provider.free && <p className="tiny muted">📋 {t('ai.freeTierModels')}</p>}
         {!provider.free && <p className="tiny muted">💳 {t('ai.subscriptionNote')}</p>}
         <p className="tiny muted">
           🔒 <Bidi>{t('ai.privacy')}</Bidi>

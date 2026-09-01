@@ -161,6 +161,8 @@ export default {
     usageToday: '{n} requests today, from this browser',
     usageOfLimit: '{n} of about {max} free requests today, from this browser',
     usageNote: 'Counted on this device only. Providers do not publish how much quota is left.',
+    blocked: { quota: 'no free quota', retired: 'not available' },
+    freeTierModels: 'On the free tier only some models carry an allowance — usually the 2.5 family. The rest are paid-only and will be refused.',
     showDetail: 'What the provider said',
     modelsFound: '{n} models available to this key',
 
