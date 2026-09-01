@@ -16,13 +16,14 @@ import {
 import { PhotoOrPlaceholder, statusInfo, FavoriteButton, ListRow } from '../components/plant.jsx';
 import { EventSheet } from '../components/eventSheet.jsx';
 import { LineChart } from '../components/chart.jsx';
+import { PlantChat } from '../components/plantChat.jsx';
 import { IconMore, IconEdit, IconTrash, IconDrop, IconRuler, IconPlus, IconCamera } from '../components/icons.jsx';
 import { eventType, METRIC_UNITS } from '../lib/domain.js';
 import { waterEventType, isWaterMedium } from '../data/model.js';
 import { growthRate } from '../lib/stats.js';
 import { toDate, daysBetween } from '../lib/format.js';
 
-const TABS = ['overview', 'timeline', 'growth', 'health', 'gallery', 'details'];
+const TABS = ['ask', 'overview', 'timeline', 'growth', 'health', 'gallery', 'details'];
 
 export default function PlantDetail() {
   const { id } = useParams();
@@ -33,7 +34,7 @@ export default function PlantDetail() {
 
   const plant = store.plantById(id);
   const s = store.statsFor(id);
-  const [tab, setTab] = useState('overview');
+  const [tab, setTab] = useState('ask');
   const [sheet, setSheet] = useState(null); // { type, issue } | 'menu' | 'pick'
   const [confirm, setConfirm] = useState(null);
   const [lightbox, setLightbox] = useState(null);
@@ -91,12 +92,13 @@ export default function PlantDetail() {
               aria-selected={tab === k}
               onClick={() => setTab(k)}
             >
-              {t(`plant.${k}`)}
+              {k === 'ask' ? `✨ ${t('ai.ask')}` : t(`plant.${k}`)}
             </button>
           ))}
         </div>
 
         <div role="tabpanel" style={{ paddingBlockStart: 16 }}>
+          {tab === 'ask' && <PlantChat plant={plant} stats={s} />}
           {tab === 'overview' && <Overview plant={plant} s={s} onOpenEvent={(x) => setSheet(x)} />}
           {tab === 'timeline' && <Timeline plant={plant} s={s} onAdd={() => setSheet({ pick: true })} />}
           {tab === 'growth' && <Growth plant={plant} s={s} onAdd={() => setSheet({ type: 'growth' })} />}

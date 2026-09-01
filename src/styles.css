@@ -1867,3 +1867,194 @@ input[type='time'] {
   font-size: 12px;
   font-weight: 600;
 }
+
+/* ---------------------------------------------------------- plant chat */
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 46dvh;
+}
+.chat-log {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-block-end: 12px;
+}
+.chat-empty {
+  text-align: center;
+  padding: 26px 12px;
+}
+.bubble {
+  max-inline-size: 88%;
+  padding: 10px 13px;
+  border-radius: var(--r-lg);
+  font-size: 14.5px;
+  line-height: 1.5;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  align-self: flex-start;
+  border-start-start-radius: 6px;
+}
+.bubble.user {
+  align-self: flex-end;
+  background: var(--green-soft);
+  border-color: transparent;
+  color: var(--green-ink);
+  border-start-start-radius: var(--r-lg);
+  border-end-end-radius: 6px;
+}
+.bubble.err {
+  background: var(--red-soft);
+  border-color: color-mix(in srgb, var(--red) 25%, transparent);
+  color: var(--red);
+}
+.bubble-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.bubble-photo {
+  inline-size: 100%;
+  max-inline-size: 220px;
+  border-radius: 12px;
+  margin-block-end: 8px;
+}
+.bubble-events {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-block-start: 9px;
+  padding-block-start: 9px;
+  border-block-start: 1px solid var(--line);
+}
+.bubble-undo {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-decoration: underline;
+  margin-inline-start: auto;
+}
+.dots {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  block-size: 12px;
+}
+.dots i {
+  inline-size: 6px;
+  block-size: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  animation: blink 1.2s infinite;
+}
+.dots i:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.dots i:nth-child(3) {
+  animation-delay: 0.4s;
+}
+@keyframes blink {
+  0%, 60%, 100% { opacity: 0.25; }
+  30% { opacity: 1; }
+}
+.chat-attach {
+  position: relative;
+  inline-size: fit-content;
+  margin-block-end: 8px;
+}
+.chat-attach img {
+  block-size: 74px;
+  border-radius: 12px;
+}
+.chat-attach .btn {
+  position: absolute;
+  inset-block-start: -8px;
+  inset-inline-end: -8px;
+  min-inline-size: 28px;
+  min-block-size: 28px;
+  background: var(--ink);
+  color: var(--bg);
+  border-radius: 50%;
+}
+.chat-input {
+  position: sticky;
+  inset-block-end: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: flex-end;
+  gap: 7px;
+  padding-block: 8px;
+  background: var(--bg);
+}
+.chat-input textarea {
+  flex: 1;
+  min-block-size: 46px;
+  max-block-size: 40dvh;
+  field-sizing: content;
+  resize: none;
+  border-radius: 22px;
+  padding: 12px 15px;
+}
+.chat-input .btn.icon {
+  flex: none;
+  min-inline-size: 44px;
+}
+.chat-input .btn.primary {
+  background: var(--green);
+  color: #fff;
+  border-color: var(--green);
+  font-size: 19px;
+  font-weight: 700;
+}
+@media (min-width: 900px) {
+  .chat-input {
+    inset-block-end: 0;
+  }
+}
+
+/* identify flow */
+.identify-shot {
+  position: relative;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--bg-soft);
+}
+.identify-shot img {
+  inline-size: 100%;
+  aspect-ratio: 4 / 3;
+  block-size: auto;
+  object-fit: cover;
+}
+.identify-shot .working {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  background: rgba(10, 20, 14, 0.55);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  backdrop-filter: blur(2px);
+}
+.big-camera {
+  inline-size: 100%;
+  min-block-size: 190px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-xl);
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  color: var(--muted);
+  padding: 24px;
+  text-align: center;
+}
+.big-camera .ico {
+  font-size: 34px;
+}
+.big-camera b {
+  color: var(--ink);
+  font-size: 16px;
+}

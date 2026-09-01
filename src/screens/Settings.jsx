@@ -6,6 +6,7 @@ import { TopBar } from '../components/topbar.jsx';
 import { Segmented, Confirm, useToast, EmptyState, Bidi, Sheet } from '../components/ui.jsx';
 import { ListRow } from '../components/plant.jsx';
 import { MembersPanel, JungleSheet } from '../components/jungleSwitcher.jsx';
+import { AiPanel } from '../components/aiSettings.jsx';
 
 export default function Settings() {
   const { t, lang, setLang, units, setUnits, theme, setTheme } = useI18n();
@@ -40,6 +41,13 @@ export default function Settings() {
             <Bidi>{store.user?.displayName || store.user?.email}</Bidi>
           </p>
         </div>
+
+        <section className="section">
+          <div className="section-head">
+            <h3>{t('ai.title')}</h3>
+          </div>
+          <AiPanel />
+        </section>
 
         <section className="section">
           <div className="section-head">

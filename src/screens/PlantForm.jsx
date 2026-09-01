@@ -26,6 +26,8 @@ import {
   defaultInterval,
 } from '../lib/domain.js';
 import { emptyPlant } from '../data/model.js';
+import { IdentifySheet } from '../components/identifySheet.jsx';
+import { useAi } from '../components/aiSettings.jsx';
 import { isoDate } from '../lib/format.js';
 
 export default function PlantForm() {
@@ -35,10 +37,14 @@ export default function PlantForm() {
   const store = useStore();
   const toast = useToast();
 
+  const ai = useAi();
   const existing = id ? store.plantById(id) : null;
   const [p, setP] = useState(() => existing || emptyPlant());
   const [photo, setPhoto] = useState(() => (existing?.photo?.url ? [existing.photo] : []));
   const [error, setError] = useState(null);
+  // A new plant starts at the camera when an assistant is connected: the photo
+  // fills in the species and care rule, which is the whole point of the pivot.
+  const [identifying, setIdentifying] = useState(() => !id && ai.ready);
 
   // A fixed id per form session: a double tap writes the same document twice.
   const targetId = useMemo(() => id || store.newId('plants'), [id, store]);
@@ -89,9 +95,31 @@ export default function PlantForm() {
 
   const parents = store.plants.filter((x) => x.id !== targetId && x.status === 'active');
 
+  const applyIdentity = ({ patch, photo: shot }) => {
+    setP((v) => ({ ...v, ...patch, care: { ...v.care, ...patch.care } }));
+    if (shot) setPhoto([{ blob: shot.blob, preview: shot.preview }]);
+  };
+
   return (
     <>
-      <TopBar back title={existing ? t('plant.editTitle') : t('plant.newTitle')} />
+      <TopBar
+        back
+        title={existing ? t('plant.editTitle') : t('plant.newTitle')}
+        actions={
+          !existing && ai.ready ? (
+            <button className="btn sm soft" onClick={() => setIdentifying(true)}>
+              📷 {t('ai.identify')}
+            </button>
+          ) : null
+        }
+      />
+
+      <IdentifySheet
+        open={identifying}
+        onClose={() => setIdentifying(false)}
+        onAccept={applyIdentity}
+        onManual={() => setIdentifying(false)}
+      />
       <main className="content" id="main">
         <form
           onSubmit={(e) => {
