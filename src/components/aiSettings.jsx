@@ -154,11 +154,17 @@ const versionOf = (id) => {
 function preferredModel(providerId, list, fallback) {
   if (!list.length) return fallback;
   const newest = (re) => list.filter((m) => re.test(m)).sort((a, b) => versionOf(b) - versionOf(a))[0];
+  const oldest = (re) => list.filter((m) => re.test(m)).sort((a, b) => versionOf(a) - versionOf(b))[0];
+  // Gemini is the free-tier default, and free quota is granted per model: the
+  // newest ones frequently have none, while the smaller Flash-Lite models have
+  // the largest allowance. So the opening pick goes for the one most likely to
+  // work rather than the one most capable. Paid users can change it; the
+  // dropdown lists everything their key can run.
   if (providerId === 'gemini')
     return (
-      list.find((m) => m === 'gemini-flash-latest') ||
-      newest(/^gemini-[\d.]+-flash$/) ||
-      newest(/flash/) ||
+      oldest(/flash-lite/) ||
+      list.find((m) => m === 'gemini-flash-lite-latest') ||
+      oldest(/flash/) ||
       list[0]
     );
   if (providerId === 'openai') return list.find((m) => m === 'gpt-5') || newest(/^gpt-\d/) || list[0];

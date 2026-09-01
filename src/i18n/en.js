@@ -196,7 +196,7 @@ export default {
       badKey: 'That key was rejected. Check it in Settings.',
       apiDisabled: 'The Generative Language API is not enabled on the Google project this key belongs to. Open the link in the error detail to switch it on.',
       noModels: 'That key works, but no usable models came back for it.',
-      rateLimit: 'Daily free quota reached. Google’s free tier resets at midnight Pacific time — or switch provider in Settings.',
+      rateLimit: 'No free quota left for any available model. On the free tier each model has its own allowance, and the newest ones often have none — the smaller Flash-Lite models have the most. Google’s allowances reset at midnight Pacific time.',
       badModel: 'That model name was not accepted. Try the default one in Settings.',
       providerDown: 'The provider is having trouble. Try again shortly.',
       request: 'The request was refused.',

@@ -22,7 +22,7 @@ export const PROVIDERS = {
     id: 'gemini',
     label: 'Google Gemini',
     free: true,
-    defaultModel: 'gemini-flash-latest',
+    defaultModel: 'gemini-flash-lite-latest',
     keyUrl: 'https://aistudio.google.com/apikey',
     keyHint: 'AIza…',
   },
@@ -120,6 +120,47 @@ function countRequest() {
 /** Published free-tier ceilings, for context next to the tally. Null = paid only. */
 export const FREE_DAILY_LIMIT = { gemini: 250, openai: null, anthropic: null };
 
+const MODELS_KEY = 'myjungle.ai.models';
+
+export function saveModelList(provider, list) {
+  try {
+    localStorage.setItem(MODELS_KEY, JSON.stringify({ provider, list }));
+  } catch {
+    /* private mode */
+  }
+}
+
+export function readModelList(provider) {
+  try {
+    const v = JSON.parse(localStorage.getItem(MODELS_KEY) || '{}');
+    return v.provider === provider && Array.isArray(v.list) ? v.list : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Free-tier quota on Gemini is granted per model, and a newly released one
+ * often has none at all — so "the newest model" is exactly the wrong fallback
+ * for someone on the free tier. Walk towards the smaller, older, longer-lived
+ * models instead, which are the ones that carry free quota.
+ */
+export function quotaFallbacks(provider, current) {
+  const list = readModelList(provider).filter((m) => m !== current);
+  if (provider !== 'gemini') return list.slice(0, 2);
+  const score = (m) => {
+    let s = 0;
+    if (/flash-lite/.test(m)) s -= 30; // largest free allowance
+    else if (/flash/.test(m)) s -= 20;
+    if (/latest/.test(m)) s += 5; // an alias may point at a paid-only model
+    if (/preview|exp/.test(m)) s += 15;
+    const v = m.match(/(\d+)(?:\.(\d+))?/);
+    if (v) s += Number(v[1]) * 2 + Number(v[2] || 0) / 10; // prefer older
+    return s;
+  };
+  return [...list].sort((a, b) => score(a) - score(b)).slice(0, 3);
+}
+
 /** Thrown with a `key` an i18n dictionary can translate. */
 export class AiError extends Error {
   constructor(key, detail) {
@@ -168,6 +209,20 @@ export async function chat({ system, prompt, history = [], image, json = false, 
     if (err instanceof AiError && err.suggestedModel && err.suggestedModel !== model && !_retried) {
       saveAiSettings({ ...settings, model: err.suggestedModel });
       return chat({ system, prompt, history, image, json, signal, _retried: true });
+    }
+    // A quota refusal on the free tier usually means this particular model has
+    // no free allowance, not that the day's requests are spent. Try the models
+    // that do, in order, before telling the owner they are out.
+    if (err instanceof AiError && err.key === 'ai.errors.rateLimit') {
+      const tried = Array.isArray(_retried) ? _retried : [];
+      const next = quotaFallbacks(provider, model).find((m) => !tried.includes(m));
+      if (next) {
+        saveAiSettings({ ...settings, model: next });
+        return chat({
+          system, prompt, history, image, json, signal,
+          _retried: [...tried, model, next],
+        });
+      }
     }
     if (err instanceof AiError) throw err;
     if (err.name === 'AbortError') throw new AiError('ai.errors.aborted');
@@ -239,7 +294,7 @@ export async function listModels() {
     });
     if (!res.ok) await readError(res);
     const data = await res.json();
-    return (data.models || [])
+    const out = (data.models || [])
       .filter((m) => (m.supportedGenerationMethods || []).includes('generateContent'))
       .map((m) => String(m.name).replace(/^models\//, ''))
       // The catalogue also carries image, music, speech, robotics and research
@@ -251,6 +306,8 @@ export async function listModels() {
           ),
       )
       .sort();
+    saveModelList(provider, out);
+    return out;
   }
 
   if (provider === 'openai') {
@@ -259,10 +316,12 @@ export async function listModels() {
     });
     if (!res.ok) await readError(res);
     const data = await res.json();
-    return (data.data || [])
+    const out = (data.data || [])
       .map((m) => m.id)
       .filter((id) => /^(gpt|o\d|chatgpt)/i.test(id) && !/embed|audio|tts|whisper|image|moderation|realtime/i.test(id))
       .sort();
+    saveModelList(provider, out);
+    return out;
   }
 
   const res = await fetch('https://api.anthropic.com/v1/models?limit=100', {
@@ -274,7 +333,9 @@ export async function listModels() {
   });
   if (!res.ok) await readError(res);
   const data = await res.json();
-  return (data.data || []).map((m) => m.id).sort();
+  const out = (data.data || []).map((m) => m.id).sort();
+  saveModelList(provider, out);
+  return out;
 }
 
 /* ---------------------------------------------------------------- adapters */
