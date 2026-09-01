@@ -26,6 +26,7 @@ import {
 } from '../lib/domain.js';
 import { isoDate, isoTime, combineDateTime } from '../lib/format.js';
 import { waterEventType } from '../data/model.js';
+import { photoErrorKey, photoErrorDetail } from '../lib/photoError.js';
 
 /**
  * Every event type is described as a list of fields rather than as its own
@@ -246,13 +247,13 @@ export function EventSheet({ open, onClose, plant, type: initialType, issue, onS
     // Upload first so a failure does not silently drop the photo, but never
     // block the record itself: the entry is saved either way.
     let uploaded = [];
-    let failed = false;
+    let failure = null;
     for (const p of photos) {
       try {
         uploaded.push(p.url ? p : await store.uploadPhoto(plant.id, p.blob, { width: p.w, height: p.h }));
       } catch (err) {
         console.error(err);
-        failed = true;
+        failure = err;
       }
     }
 
@@ -277,7 +278,10 @@ export function EventSheet({ open, onClose, plant, type: initialType, issue, onS
     if (patch) await store.savePlant(plant.id, patch);
 
     photos.forEach((p) => p.preview && URL.revokeObjectURL(p.preview));
-    toast(failed ? t('gallery.uploadFailedBody') : savedMessage(type, t), failed ? { type: 'error' } : {});
+    toast(
+      failure ? `${t(photoErrorKey(failure))} ${photoErrorDetail(failure)}` : savedMessage(type, t),
+      failure ? { type: 'error' } : {},
+    );
     onSaved?.(type);
     onClose();
   });

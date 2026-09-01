@@ -358,8 +358,12 @@ export function StoreProvider({ children }) {
       }
       const path = `jungles/${jid}/plants/${plantId}/${newId('photos')}.jpg`;
       const r = sref(storage, path);
+      let stage = 'upload';
       try {
         await uploadBytes(r, blob, { contentType: 'image/jpeg', cacheControl: 'public,max-age=31536000' });
+        // A separate permission: the bytes can land and this still be refused,
+        // which looks identical to a failed upload unless it is named.
+        stage = 'geturl';
         const url = await getDownloadURL(r);
         return { url, path, w: width, h: height };
       } catch (err) {
@@ -367,9 +371,10 @@ export function StoreProvider({ children }) {
         // is wrong for the two causes that actually happen: a bucket without
         // CORS for this origin, and rules that reject the write. Keep the real
         // code and message so the UI can say which.
-        console.error('photo upload failed', { path, code: err?.code, message: err?.message }, err);
+        console.error('photo upload failed', { stage, path, code: err?.code, message: err?.message }, err);
         const e = new Error(err?.message || 'upload failed');
         e.code = err?.code || 'storage/unknown';
+        e.stage = stage;
         e.path = path;
         throw e;
       }

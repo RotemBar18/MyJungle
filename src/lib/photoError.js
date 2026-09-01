@@ -20,4 +20,4 @@ export function photoErrorKey(err) {
 }
 
 export const photoErrorDetail = (err) =>
-  [err?.code, err?.message].filter(Boolean).join(' — ').slice(0, 400);
+  [err?.stage, err?.code, err?.message].filter(Boolean).join(' — ').slice(0, 400);
