@@ -80,6 +80,12 @@ export function saveAiSettings(s) {
 
 export const hasAiKey = () => Boolean(loadAiSettings().apiKey.trim());
 
+export const emptyAiSettings = () => ({
+  provider: 'gemini',
+  apiKey: '',
+  model: PROVIDERS.gemini.defaultModel,
+});
+
 /* ------------------------------------------------------------------- usage */
 
 const USAGE_KEY = 'myjungle.ai.usage';

@@ -150,7 +150,7 @@ export default {
     notConfigured: 'No assistant connected yet',
     notConfiguredBody: 'Add a key in Settings and the camera can identify your plants for you.',
     privacy:
-      'The key is stored in this browser only. It is never uploaded, never shared with the other people in your jungle, and never seen by anyone else — so each person pays for their own use.',
+      'The key is saved to your account so it follows you between devices. Your security rules make it readable only by you — never by the other people in your jungle, who each use their own key and pay for their own use. Signing out clears it from this browser.',
     subscriptionNote:
       'An API key is not the same thing as a ChatGPT Plus or Claude Pro subscription. It is billed separately, per use.',
     freeNote: 'Google Gemini has a free tier with no card required. Prompts on the free tier may be used to improve Google’s products.',

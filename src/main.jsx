@@ -9,11 +9,11 @@ import { AiProvider } from './components/aiSettings.jsx';
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <I18nProvider>
-      <AiProvider>
-        <StoreProvider>
+      <StoreProvider>
+        <AiProvider>
           <App />
-        </StoreProvider>
-      </AiProvider>
+        </AiProvider>
+      </StoreProvider>
     </I18nProvider>
   </StrictMode>,
 );

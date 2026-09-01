@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useI18n } from '../i18n/index.jsx';
+import { useStore } from '../data/store.jsx';
 import { TextField, SelectField, useToast, Bidi } from './ui.jsx';
 import {
   PROVIDERS,
@@ -10,6 +11,7 @@ import {
   listModels,
   AiError,
   AI_SETTINGS_EVENT,
+  emptyAiSettings,
   readUsage,
   FREE_DAILY_LIMIT,
 } from '../lib/ai.js';
@@ -22,6 +24,7 @@ import {
 const AiContext = createContext(null);
 
 export function AiProvider({ children }) {
+  const store = useStore();
   // The ref, not the state, is the live value. A React state updater runs when
   // React decides to, so persisting from inside one meant `chat()` — which reads
   // localStorage — could still see the previous model on the very next line.
@@ -29,31 +32,83 @@ export function AiProvider({ children }) {
   const current = useRef(loadAiSettings());
   const [settings, setSettings] = useState(current.current);
 
-  const update = useCallback((patch) => {
-    const prev = current.current;
-    const next = { ...prev, ...patch };
-    // Switching provider carries the old provider's model name across, which
-    // would always fail; reset it unless the model itself was what changed.
-    if (patch.provider && patch.provider !== prev.provider && !patch.model) {
-      next.model = PROVIDERS[patch.provider].defaultModel;
-      next.apiKey = '';
-    }
+  const apply = useCallback((next) => {
     current.current = next;
     saveAiSettings(next);
     setSettings(next);
-    return next;
   }, []);
 
-  // `chat()` can switch the model on its own when a provider retires one.
+  const update = useCallback(
+    (patch) => {
+      const prev = current.current;
+      const next = { ...prev, ...patch };
+      // Switching provider carries the old provider's model name across, which
+      // would always fail; reset it unless the model itself was what changed.
+      if (patch.provider && patch.provider !== prev.provider && !patch.model) {
+        next.model = PROVIDERS[patch.provider].defaultModel;
+        next.apiKey = '';
+      }
+      apply(next);
+      // Follow it to the account so the other devices pick it up. localStorage
+      // stays the primary read, so the assistant works before the profile has
+      // even loaded.
+      if (store.uid) store.saveProfile({ ai: next }).catch(() => {});
+      return next;
+    },
+    [apply, store],
+  );
+
+  /**
+   * Adopt whatever the account holds, and seed the account from this device the
+   * first time it has a key and the account does not. Last write wins, which is
+   * the right resolution for one person's own key on their own devices.
+   */
+  const remote = store.profile?.ai;
+  useEffect(() => {
+    if (!store.uid) return;
+    const local = current.current;
+    if (remote?.apiKey) {
+      if (
+        remote.apiKey !== local.apiKey ||
+        remote.provider !== local.provider ||
+        remote.model !== local.model
+      ) {
+        apply({ provider: remote.provider, apiKey: remote.apiKey, model: remote.model });
+      }
+    } else if (local.apiKey.trim() && store.profile) {
+      store.saveProfile({ ai: local }).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remote?.apiKey, remote?.provider, remote?.model, store.uid, Boolean(store.profile)]);
+
+  /**
+   * A key belongs to the person who typed it. When a different account signs in
+   * on this browser — or nobody does — the previous one's key must not linger
+   * where the next person could use it.
+   */
+  const lastUid = useRef(store.uid);
+  useEffect(() => {
+    if (lastUid.current && lastUid.current !== store.uid) apply(emptyAiSettings());
+    lastUid.current = store.uid;
+  }, [store.uid, apply]);
+
+  // `chat()` can switch the model on its own when a provider retires one. That
+  // write happens outside React, so pick it up here — and carry it to the
+  // account too, or the other devices would keep using the retired model.
   useEffect(() => {
     const sync = () => {
       const fresh = loadAiSettings();
+      const changedElsewhere =
+        fresh.model !== current.current.model ||
+        fresh.provider !== current.current.provider ||
+        fresh.apiKey !== current.current.apiKey;
       current.current = fresh;
       setSettings(fresh);
+      if (changedElsewhere && store.uid) store.saveProfile({ ai: fresh }).catch(() => {});
     };
     window.addEventListener(AI_SETTINGS_EVENT, sync);
     return () => window.removeEventListener(AI_SETTINGS_EVENT, sync);
-  }, []);
+  }, [store]);
 
   const value = useMemo(
     () => ({ ...settings, ready: Boolean(settings.apiKey.trim()), update }),
