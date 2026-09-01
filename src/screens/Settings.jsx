@@ -125,7 +125,8 @@ export default function Settings() {
             {t('settings.aboutBody')} {t('settings.storageNote')}
           </p>
           <p className="tiny muted">
-            {t('common.version')} 1.0 · {store.online ? t('sync.synced') : t('sync.offline')}
+            {t('common.version')} 1.0 · <span className="ltr-run">{__BUILD__}</span> ·{' '}
+            {store.online ? t('sync.synced') : t('sync.offline')}
             {store.pending > 0 && ` · ${t('sync.pending', { n: store.pending })}`}
           </p>
         </section>

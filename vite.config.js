@@ -2,7 +2,10 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ');
+
 export default defineConfig({
+  define: { __BUILD__: JSON.stringify(BUILD) },
   plugins: [
     react(),
     VitePWA({
@@ -11,6 +14,12 @@ export default defineConfig({
       // ponytail: seed photos are excluded from precache (3MB); they are fetched
       // on demand during migration only.
       workbox: {
+        // A stale shell was silently serving old code during development, so an
+        // update claims open tabs immediately instead of waiting for every one
+        // of them to close.
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
         navigateFallbackDenylist: [/^\/seed\//],
         runtimeCaching: [
