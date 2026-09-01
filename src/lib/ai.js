@@ -126,19 +126,75 @@ export async function testKey() {
 
 /* ------------------------------------------------------------------ helpers */
 
-async function readError(res, provider) {
+async function readError(res) {
   let detail = '';
   try {
     const body = await res.json();
-    detail = body?.error?.message || body?.message || JSON.stringify(body).slice(0, 300);
+    detail = body?.error?.message || body?.message || JSON.stringify(body).slice(0, 400);
   } catch {
-    detail = await res.text().catch(() => '');
+    detail = (await res.text().catch(() => '')).slice(0, 400);
   }
+  // Classify on status first. An earlier version also matched /model/i anywhere
+  // in the text, which swallowed the real reason for every error whose message
+  // merely mentioned the word — including key problems, whose URLs contain
+  // "models/". Only a 404, or a message that explicitly says the model was not
+  // found, counts as a bad model name.
   if (res.status === 401 || res.status === 403) throw new AiError('ai.errors.badKey', detail);
   if (res.status === 429) throw new AiError('ai.errors.rateLimit', detail);
-  if (res.status === 404 || /model/i.test(detail)) throw new AiError('ai.errors.badModel', detail);
+  if (res.status === 404 || /model .*(not found|does not exist|not supported)|unknown model|invalid model/i.test(detail))
+    throw new AiError('ai.errors.badModel', detail);
   if (res.status >= 500) throw new AiError('ai.errors.providerDown', detail);
   throw new AiError('ai.errors.request', detail);
+}
+
+/**
+ * Ask the provider which models this key can actually use.
+ *
+ * Hard-coding model names is a losing game in a bring-your-own-key app: they
+ * differ by provider, change over time, and vary by what a given key is
+ * entitled to. Every provider exposes a list endpoint, so the settings screen
+ * asks instead of guessing.
+ */
+export async function listModels() {
+  const { provider, apiKey } = loadAiSettings();
+  if (!apiKey.trim()) throw new AiError('ai.errors.noKey');
+  const key = apiKey.trim();
+
+  if (provider === 'gemini') {
+    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', {
+      headers: { 'x-goog-api-key': key },
+    });
+    if (!res.ok) await readError(res);
+    const data = await res.json();
+    return (data.models || [])
+      .filter((m) => (m.supportedGenerationMethods || []).includes('generateContent'))
+      .map((m) => String(m.name).replace(/^models\//, ''))
+      .filter((id) => !/embedding|aqa|imagen|veo|tts/i.test(id))
+      .sort();
+  }
+
+  if (provider === 'openai') {
+    const res = await fetch('https://api.openai.com/v1/models', {
+      headers: { Authorization: `Bearer ${key}` },
+    });
+    if (!res.ok) await readError(res);
+    const data = await res.json();
+    return (data.data || [])
+      .map((m) => m.id)
+      .filter((id) => /^(gpt|o\d|chatgpt)/i.test(id) && !/embed|audio|tts|whisper|image|moderation|realtime/i.test(id))
+      .sort();
+  }
+
+  const res = await fetch('https://api.anthropic.com/v1/models?limit=100', {
+    headers: {
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+  });
+  if (!res.ok) await readError(res);
+  const data = await res.json();
+  return (data.data || []).map((m) => m.id).sort();
 }
 
 /* ---------------------------------------------------------------- adapters */
@@ -171,7 +227,7 @@ const ADAPTERS = {
         }),
       },
     );
-    if (!res.ok) await readError(res, 'gemini');
+    if (!res.ok) await readError(res);
     const data = await res.json();
     if (data.promptFeedback?.blockReason) throw new AiError('ai.errors.blocked');
     return (data.candidates?.[0]?.content?.parts || [])
@@ -204,7 +260,7 @@ const ADAPTERS = {
         ...(json ? { response_format: { type: 'json_object' } } : {}),
       }),
     });
-    if (!res.ok) await readError(res, 'openai');
+    if (!res.ok) await readError(res);
     const data = await res.json();
     return (data.choices?.[0]?.message?.content || '').trim();
   },
@@ -234,7 +290,7 @@ const ADAPTERS = {
       },
       body: JSON.stringify({ model, max_tokens: 2048, ...(system ? { system } : {}), messages }),
     });
-    if (!res.ok) await readError(res, 'anthropic');
+    if (!res.ok) await readError(res);
     const data = await res.json();
     return (data.content || [])
       .filter((b) => b.type === 'text')

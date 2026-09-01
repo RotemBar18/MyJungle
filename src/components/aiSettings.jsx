@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { useI18n } from '../i18n/index.jsx';
 import { TextField, SelectField, useToast, Bidi } from './ui.jsx';
-import { PROVIDERS, PROVIDER_IDS, loadAiSettings, saveAiSettings, testKey, AiError } from '../lib/ai.js';
+import { PROVIDERS, PROVIDER_IDS, loadAiSettings, saveAiSettings, testKey, listModels, AiError } from '../lib/ai.js';
 
 /**
  * Where the AI key is configured, and the one place that knows whether an
@@ -62,17 +62,35 @@ export function AiPanel() {
   const explain = useAiError();
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
+  const [models, setModels] = useState([]);
   const provider = PROVIDERS[ai.provider];
 
+  /**
+   * Test and discover in one step. Asking the provider which models the key can
+   * use turns "that model name was not accepted" from a dead end into a picker,
+   * and it is the same round trip either way.
+   */
   const run = async () => {
     setBusy(true);
     setResult(null);
     try {
+      const available = await listModels();
+      setModels(available);
+      // If the saved model is not on the key's list, move to a sensible one from
+      // the list itself rather than leaving a name that cannot work.
+      let model = ai.model;
+      if (available.length && !available.includes(model)) {
+        model =
+          available.find((m) => m === provider.defaultModel) ||
+          available.find((m) => m.includes('flash') || m.includes('mini') || m.includes('haiku')) ||
+          available[0];
+        ai.update({ model });
+      }
       await testKey();
-      setResult({ ok: true });
+      setResult({ ok: true, model });
       toast(t('ai.testOk'));
     } catch (err) {
-      setResult({ ok: false, message: explain(err) });
+      setResult({ ok: false, message: explain(err), detail: err?.detail });
     } finally {
       setBusy(false);
     }
@@ -89,6 +107,7 @@ export function AiPanel() {
           onChange={(provider) => {
             ai.update({ provider });
             setResult(null);
+            setModels([]);
           }}
           options={PROVIDER_IDS.map((id) => ({
             value: id,
@@ -120,25 +139,55 @@ export function AiPanel() {
         </div>
 
         {result && (
-          <div className={`banner ${result.ok ? 'info' : 'err'}`} style={{ marginBlockEnd: 14 }} role="status">
-            {result.ok ? `✓ ${t('ai.testOk')}` : result.message}
+          <div className={`banner ${result.ok ? 'info' : 'err'}`} style={{ marginBlockEnd: 14, display: 'block' }} role="status">
+            <div>{result.ok ? `✓ ${t('ai.testOk')} — ${result.model}` : result.message}</div>
+            {result.detail && (
+              <details style={{ marginBlockStart: 8 }}>
+                <summary className="tiny" style={{ cursor: 'pointer' }}>
+                  {t('ai.showDetail')}
+                </summary>
+                <pre
+                  className="tiny"
+                  style={{
+                    marginBlockStart: 6,
+                    whiteSpace: 'pre-wrap',
+                    overflowWrap: 'anywhere',
+                    direction: 'ltr',
+                    textAlign: 'left',
+                    opacity: 0.85,
+                  }}
+                >
+                  {result.detail}
+                </pre>
+              </details>
+            )}
           </div>
         )}
 
-        <details>
-          <summary className="small muted" style={{ cursor: 'pointer', minHeight: 32 }}>
-            {t('ai.model')}
-          </summary>
-          <div style={{ paddingBlockStart: 10 }}>
-            <TextField
-              label={t('ai.model')}
-              dir="ltr"
-              value={ai.model}
-              onChange={(e) => ai.update({ model: e.target.value })}
-              hint={provider.defaultModel}
-            />
-          </div>
-        </details>
+        {models.length > 0 ? (
+          <SelectField
+            label={t('ai.model')}
+            value={models.includes(ai.model) ? ai.model : models[0]}
+            onChange={(model) => ai.update({ model })}
+            options={models.map((m) => ({ value: m, label: m }))}
+            hint={t('ai.modelsFound', { n: models.length })}
+          />
+        ) : (
+          <details>
+            <summary className="small muted" style={{ cursor: 'pointer', minHeight: 32 }}>
+              {t('ai.model')}
+            </summary>
+            <div style={{ paddingBlockStart: 10 }}>
+              <TextField
+                label={t('ai.model')}
+                dir="ltr"
+                value={ai.model}
+                onChange={(e) => ai.update({ model: e.target.value })}
+                hint={t('ai.modelHint')}
+              />
+            </div>
+          </details>
+        )}
       </div>
 
       <div className="col" style={{ gap: 8, marginBlockStart: 12 }}>

@@ -155,6 +155,10 @@ export default {
       'An API key is not the same thing as a ChatGPT Plus or Claude Pro subscription. It is billed separately, per use.',
     freeNote: 'Google Gemini has a free tier with no card required. Prompts on the free tier may be used to improve Google’s products.',
 
+    showDetail: 'What the provider said',
+    modelsFound: '{n} models available to this key',
+    modelHint: 'Press “Test the key” and I will list the ones your key can use.',
+
     identify: 'Identify with a photo',
     identifying: 'Looking at your photo…',
     identified: 'Here is what I see',
