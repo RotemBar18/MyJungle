@@ -80,6 +80,40 @@ export function saveAiSettings(s) {
 
 export const hasAiKey = () => Boolean(loadAiSettings().apiKey.trim());
 
+/* ------------------------------------------------------------------- usage */
+
+const USAGE_KEY = 'myjungle.ai.usage';
+
+/**
+ * A local tally of requests made today.
+ *
+ * No provider exposes "how much of my free quota is left", so this is the only
+ * honest signal available: count what this device sent, show it next to the
+ * provider's published daily limit, and be explicit that it counts this browser
+ * only. It is a guide, not an accounting.
+ */
+export function readUsage() {
+  const today = new Date().toISOString().slice(0, 10);
+  try {
+    const u = JSON.parse(localStorage.getItem(USAGE_KEY) || '{}');
+    return u.date === today ? { date: today, count: u.count || 0 } : { date: today, count: 0 };
+  } catch {
+    return { date: today, count: 0 };
+  }
+}
+
+function countRequest() {
+  const u = readUsage();
+  try {
+    localStorage.setItem(USAGE_KEY, JSON.stringify({ date: u.date, count: u.count + 1 }));
+  } catch {
+    /* private mode */
+  }
+}
+
+/** Published free-tier ceilings, for context next to the tally. Null = paid only. */
+export const FREE_DAILY_LIMIT = { gemini: 250, openai: null, anthropic: null };
+
 /** Thrown with a `key` an i18n dictionary can translate. */
 export class AiError extends Error {
   constructor(key, detail) {
@@ -116,6 +150,7 @@ export async function chat({ system, prompt, history = [], image, json = false, 
 
   const adapter = ADAPTERS[provider];
   const started = Date.now();
+  countRequest();
   try {
     const text = await adapter({ apiKey: apiKey.trim(), model, system, prompt, history, image, json, signal });
     if (!text) throw new AiError('ai.errors.empty');

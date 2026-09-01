@@ -158,6 +158,9 @@ export default {
     loadingModels: 'Loading the models your key can use…',
     modelNeedsKey: 'Add a key and the list fills itself in.',
     modelsUnavailable: 'Could not load the list for this key.',
+    usageToday: '{n} requests today, from this browser',
+    usageOfLimit: '{n} of about {max} free requests today, from this browser',
+    usageNote: 'Counted on this device only. Providers do not publish how much quota is left.',
     showDetail: 'What the provider said',
     modelsFound: '{n} models available to this key',
 
@@ -193,7 +196,7 @@ export default {
       badKey: 'That key was rejected. Check it in Settings.',
       apiDisabled: 'The Generative Language API is not enabled on the Google project this key belongs to. Open the link in the error detail to switch it on.',
       noModels: 'That key works, but no usable models came back for it.',
-      rateLimit: 'Rate limit reached. Wait a moment, or switch provider in Settings.',
+      rateLimit: 'Daily free quota reached. Google’s free tier resets at midnight Pacific time — or switch provider in Settings.',
       badModel: 'That model name was not accepted. Try the default one in Settings.',
       providerDown: 'The provider is having trouble. Try again shortly.',
       request: 'The request was refused.',

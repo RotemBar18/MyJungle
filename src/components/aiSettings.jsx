@@ -10,6 +10,8 @@ import {
   listModels,
   AiError,
   AI_SETTINGS_EVENT,
+  readUsage,
+  FREE_DAILY_LIMIT,
 } from '../lib/ai.js';
 
 /**
@@ -147,6 +149,8 @@ export function AiPanel() {
 
   const provider = PROVIDERS[ai.provider];
   const key = ai.apiKey.trim();
+  const usage = readUsage();
+  const freeLimit = FREE_DAILY_LIMIT[ai.provider];
 
   /**
    * The model list comes from the provider as soon as there is a key to ask
@@ -288,7 +292,25 @@ export function AiPanel() {
         )}
       </div>
 
-      <div className="col" style={{ gap: 8, marginBlockStart: 4 }}>
+      {key && (
+        <div className="tile" style={{ marginBlockStart: 4 }}>
+          <small>
+            {freeLimit
+              ? t('ai.usageOfLimit', { n: usage.count, max: freeLimit })
+              : t('ai.usageToday', { n: usage.count })}
+          </small>
+          {freeLimit != null && (
+            <span className="progress" style={{ display: 'block', marginBlockStart: 6 }}>
+              <i style={{ inlineSize: `${Math.min(100, Math.round((usage.count / freeLimit) * 100))}%` }} />
+            </span>
+          )}
+          <span className="tiny muted" style={{ display: 'block', marginBlockStart: 6 }}>
+            {t('ai.usageNote')}
+          </span>
+        </div>
+      )}
+
+      <div className="col" style={{ gap: 8, marginBlockStart: 12 }}>
         {provider.free && <p className="tiny muted">🌱 {t('ai.freeNote')}</p>}
         {!provider.free && <p className="tiny muted">💳 {t('ai.subscriptionNote')}</p>}
         <p className="tiny muted">
