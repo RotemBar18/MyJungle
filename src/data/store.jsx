@@ -356,7 +356,9 @@ export function StoreProvider({ children }) {
         height = prepared.height;
         URL.revokeObjectURL(prepared.preview);
       }
-      const path = `jungles/${jid}/plants/${plantId}/${newId('photos')}.jpg`;
+      // The uid segment is what the storage rule checks: it is the only claim
+      // Storage can verify without asking Firestore who the members are.
+      const path = `jungles/${jid}/plants/${plantId}/${uid}/${newId('photos')}.jpg`;
       const r = sref(storage, path);
       let stage = 'upload';
       try {

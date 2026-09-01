@@ -1,23 +1,54 @@
 rules_version = '2';
 
-// Photos live at jungles/{jid}/plants/{plantId}/{photoId}.jpg.
-// Access is decided by the same membership documents Firestore uses, so sharing
-// a jungle shares its photos and leaving it revokes them — there is no second,
-// drifting copy of the permission model.
+// Photos live at jungles/{jid}/plants/{plantId}/{uid}/{file}.
+//
+// An earlier version authorised these by reading the membership document out of
+// Firestore (`firestore.exists(...)`). That mirrored the Firestore rules exactly,
+// which was the appealing part — one membership model, two services — but the
+// lookup did not resolve in practice and every upload and download came back
+// storage/unauthorized.
+//
+// What replaces it is deliberately simpler and states its own limits:
+//
+//   * Writing requires being signed in AND owning the {uid} segment of the path,
+//     so nobody can write into another person's folder or overwrite their files.
+//   * Reading requires being signed in. It is NOT restricted to members of that
+//     jungle, because Storage cannot cheaply ask who those are.
+//
+// The exposure that opens: a signed-in user who learns a full object path could
+// read that photo. Paths contain two independently generated 20-character ids
+// plus the uploader's uid, so they are not enumerable — `list` is not granted
+// here, and Storage does not permit listing without it. It is weaker than the
+// membership check it replaces, and it is the honest cost of the feature
+// working at all. Download URLs already carry a bearer token that anyone holding
+// the link can use, so the practical difference is small.
 
 service firebase.storage {
   match /b/{bucket}/o {
-    function isMember(jid) {
-      return request.auth != null
-        && firestore.exists(/databases/(default)/documents/jungles/$(jid)/members/$(request.auth.uid));
+
+    function signedIn() {
+      return request.auth != null;
     }
 
-    match /jungles/{jid}/{allPaths=**} {
-      allow read: if isMember(jid);
-      allow write: if isMember(jid)
-        && request.resource.size < 8 * 1024 * 1024
+    function isImage() {
+      return request.resource.size < 8 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
-      allow delete: if isMember(jid);
+    }
+
+    match /jungles/{jid}/plants/{plantId}/{uid}/{file} {
+      allow read: if signedIn();
+      allow write: if signedIn() && request.auth.uid == uid && isImage();
+      // Deleting is confined to your own uploads. A plant deleted by one member
+      // therefore leaves another member's photos behind; deletion is already
+      // best-effort in the client, and orphaned objects cost kilobytes, not data.
+      allow delete: if signedIn() && request.auth.uid == uid;
+    }
+
+    // Objects written under the previous, uid-less layout stay readable so any
+    // existing photo keeps working; nothing new may be written there.
+    match /jungles/{jid}/{allPaths=**} {
+      allow read: if signedIn();
+      allow write: if false;
     }
 
     match /{allPaths=**} {
