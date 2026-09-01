@@ -17,11 +17,12 @@ import { PhotoOrPlaceholder, statusInfo, FavoriteButton, ListRow } from '../comp
 import { EventSheet } from '../components/eventSheet.jsx';
 import { LineChart } from '../components/chart.jsx';
 import { PlantChat } from '../components/plantChat.jsx';
-import { IconMore, IconEdit, IconTrash, IconDrop, IconRuler, IconPlus, IconCamera } from '../components/icons.jsx';
+import { Album, AlbumStrip } from '../components/album.jsx';
+import { IconMore, IconEdit, IconTrash, IconRuler, IconPlus } from '../components/icons.jsx';
 import { eventType, METRIC_UNITS } from '../lib/domain.js';
 import { waterEventType, isWaterMedium } from '../data/model.js';
 import { growthRate } from '../lib/stats.js';
-import { toDate, daysBetween } from '../lib/format.js';
+import { daysBetween } from '../lib/format.js';
 
 const TABS = ['ask', 'overview', 'timeline', 'growth', 'health', 'gallery', 'details'];
 
@@ -37,7 +38,6 @@ export default function PlantDetail() {
   const [tab, setTab] = useState('ask');
   const [sheet, setSheet] = useState(null); // { type, issue } | 'menu' | 'pick'
   const [confirm, setConfirm] = useState(null);
-  const [lightbox, setLightbox] = useState(null);
 
   if (!plant) {
     return (
@@ -99,11 +99,13 @@ export default function PlantDetail() {
 
         <div role="tabpanel" style={{ paddingBlockStart: 16 }}>
           {tab === 'ask' && <PlantChat plant={plant} stats={s} />}
-          {tab === 'overview' && <Overview plant={plant} s={s} onOpenEvent={(x) => setSheet(x)} />}
+          {tab === 'overview' && (
+            <Overview plant={plant} s={s} onOpenEvent={(x) => setSheet(x)} onSeeAlbum={() => setTab('gallery')} />
+          )}
           {tab === 'timeline' && <Timeline plant={plant} s={s} onAdd={() => setSheet({ pick: true })} />}
           {tab === 'growth' && <Growth plant={plant} s={s} onAdd={() => setSheet({ type: 'growth' })} />}
           {tab === 'health' && <Health plant={plant} s={s} onOpen={(x) => setSheet(x)} />}
-          {tab === 'gallery' && <Gallery plant={plant} s={s} onOpen={setLightbox} />}
+          {tab === 'gallery' && <Album plant={plant} stats={s} />}
           {tab === 'details' && <Details plant={plant} s={s} onConfirm={setConfirm} />}
         </div>
       </main>
@@ -142,15 +144,6 @@ export default function PlantDetail() {
         }}
       />
 
-      {lightbox && (
-        <div className="lightbox" onClick={() => setLightbox(null)} role="dialog" aria-modal="true">
-          <button className="btn icon close" aria-label={t('common.close')}>✕</button>
-          <div>
-            <img src={lightbox.url} alt="" />
-            <div className="cap">{new Date(lightbox.at).toLocaleDateString()}</div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
@@ -184,7 +177,7 @@ function QuickActions({ plant, onPick }) {
   );
 }
 
-function Overview({ plant, s, onOpenEvent }) {
+function Overview({ plant, s, onOpenEvent, onSeeAlbum }) {
   const { t, days, relTime, fmtDate, length } = useI18n();
   const store = useStore();
   const children = store.childrenFor(plant.id);
@@ -252,6 +245,8 @@ function Overview({ plant, s, onOpenEvent }) {
           </p>
         )}
       </section>
+
+      <AlbumStrip plant={plant} stats={s} onSeeAll={onSeeAlbum} />
 
       <section className="card pad">
         <h3 style={{ marginBlockEnd: 10 }}>{t('plant.details')}</h3>
@@ -724,29 +719,6 @@ function IssueCard({ issue: i, onUpdate, resolved }) {
           {t('health.addUpdate')}
         </button>
       )}
-    </div>
-  );
-}
-
-function Gallery({ plant, s, onOpen }) {
-  const { t, fmtDateShort } = useI18n();
-  const all = plant.photo?.url
-    ? [{ ...plant.photo, at: toDate(plant.createdAt) || new Date(), type: 'photo' }, ...s.photos]
-    : s.photos;
-  if (!all.length) return <EmptyState emoji="📷" title={t('gallery.title')} body={t('gallery.empty')} />;
-  return (
-    <div>
-      <p className="small muted" style={{ marginBlockEnd: 10 }}>
-        {all.length === 1 ? t('gallery.countOne') : t('gallery.count', { n: all.length })}
-      </p>
-      <div className="gal">
-        {all.map((p, i) => (
-          <button key={`${p.url}-${i}`} onClick={() => onOpen(p)}>
-            <img src={p.url} alt="" loading="lazy" />
-            <span className="cap">{fmtDateShort(p.at)}</span>
-          </button>
-        ))}
-      </div>
     </div>
   );
 }

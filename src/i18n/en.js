@@ -596,6 +596,7 @@ export default {
     title: 'Photo history',
     empty: 'No photos yet. Photos you attach to events show up here.',
     count: '{n} photos',
+    spanning: 'across {n} days',
     countOne: '1 photo',
     uploading: 'Uploading…',
     uploadFailed: 'Photo upload failed',

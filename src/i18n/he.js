@@ -596,6 +596,7 @@ export default {
     title: 'היסטוריית תמונות',
     empty: 'אין עדיין תמונות. כל תמונה שתצרפו לאירוע תופיע כאן.',
     count: '{n} תמונות',
+    spanning: 'על פני {n} ימים',
     countOne: 'תמונה אחת',
     uploading: 'מעלה…',
     uploadFailed: 'העלאת התמונה נכשלה',

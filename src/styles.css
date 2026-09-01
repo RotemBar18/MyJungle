@@ -2058,3 +2058,68 @@ input[type='time'] {
   color: var(--ink);
   font-size: 16px;
 }
+
+/* ---------------------------------------------------------- album */
+
+.strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-inline: -15px;
+  padding-inline: 15px;
+  padding-block-end: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+.strip::-webkit-scrollbar {
+  display: none;
+}
+.strip figure {
+  flex: none;
+  margin: 0;
+  inline-size: 96px;
+}
+.strip img {
+  inline-size: 96px;
+  aspect-ratio: 1;
+  block-size: auto;
+  object-fit: cover;
+  border-radius: 12px;
+  background: var(--bg-soft);
+}
+.strip figcaption {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  margin-block-start: 5px;
+}
+
+.lb-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  inline-size: 100%;
+}
+.lb-nav {
+  position: absolute;
+  inset-block-start: 50%;
+  translate: 0 -50%;
+  inline-size: 44px;
+  block-size: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  backdrop-filter: blur(6px);
+}
+.lb-nav.prev {
+  inset-inline-start: 4px;
+}
+.lb-nav.next {
+  inset-inline-end: 4px;
+}
+.lb-nav svg {
+  inline-size: 22px;
+  block-size: 22px;
+}
