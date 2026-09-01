@@ -277,6 +277,55 @@ export async function chat({ system, prompt, history = [], image, json = false, 
   }
 }
 
+/**
+ * Try candidate models until one answers.
+ *
+ * Which models a key may actually use is not derivable from the catalogue: a
+ * model can be listed and still be retired for new keys, or listed and carry no
+ * free-tier allowance. Both look like ordinary entries. Guessing has been wrong
+ * repeatedly, so ask the API instead — a handful of near-empty requests, in the
+ * order most likely to succeed, stopping at the first that works.
+ *
+ * @param {(step: {model: string, ok: boolean, reason?: string}) => void} onStep
+ * @returns {Promise<{model: string|null, tried: Array}>}
+ */
+export async function findWorkingModel(onStep) {
+  const settings = loadAiSettings();
+  const { provider, apiKey, model } = settings;
+  if (!apiKey.trim()) throw new AiError('ai.errors.noKey');
+
+  const all = readModelList(provider);
+  const candidates = [model, ...quotaFallbacks(provider, model), ...all]
+    .filter((m, i, a) => m && a.indexOf(m) === i)
+    .slice(0, 10);
+
+  const tried = [];
+  for (const candidate of candidates) {
+    try {
+      await ADAPTERS[provider]({
+        apiKey: apiKey.trim(),
+        model: candidate,
+        prompt: 'Reply with: ok',
+        history: [],
+        probe: true,
+      });
+      tried.push({ model: candidate, ok: true });
+      onStep?.({ model: candidate, ok: true });
+      saveAiSettings({ ...settings, model: candidate });
+      return { model: candidate, tried };
+    } catch (err) {
+      const reason = err instanceof AiError ? err.key : 'ai.errors.request';
+      // A key problem is not per-model — stop rather than repeat it ten times.
+      if (reason === 'ai.errors.badKey' || reason === 'ai.errors.noKey') throw err;
+      if (reason === 'ai.errors.rateLimit') markBlocked(provider, apiKey, candidate, 'quota');
+      if (reason === 'ai.errors.badModel') markBlocked(provider, apiKey, candidate, 'retired');
+      tried.push({ model: candidate, ok: false, reason, detail: err?.detail });
+      onStep?.({ model: candidate, ok: false, reason });
+    }
+  }
+  return { model: null, tried };
+}
+
 /** Cheap round trip used by the "test this key" button. */
 export async function testKey() {
   const text = await chat({
@@ -386,7 +435,7 @@ export async function listModels() {
 
 const ADAPTERS = {
   /** Google AI Studio — the only one of the three with a standing free tier. */
-  async gemini({ apiKey, model, system, prompt, history, image, json, signal }) {
+  async gemini({ apiKey, model, system, prompt, history, image, json, signal, probe }) {
     const contents = history.map((m) => ({
       role: m.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: m.text }],
@@ -406,7 +455,7 @@ const ADAPTERS = {
           contents,
           ...(system ? { systemInstruction: { parts: [{ text: system }] } } : {}),
           generationConfig: {
-            maxOutputTokens: 2048,
+            maxOutputTokens: probe ? 8 : 2048,
             ...(json ? { responseMimeType: 'application/json' } : {}),
           },
         }),
@@ -421,7 +470,7 @@ const ADAPTERS = {
       .trim();
   },
 
-  async openai({ apiKey, model, system, prompt, history, image, json, signal }) {
+  async openai({ apiKey, model, system, prompt, history, image, json, signal, probe }) {
     const messages = [];
     if (system) messages.push({ role: 'system', content: system });
     for (const m of history) messages.push({ role: m.role, content: m.text });
@@ -441,7 +490,7 @@ const ADAPTERS = {
       body: JSON.stringify({
         model,
         messages,
-        max_completion_tokens: 2048,
+        max_completion_tokens: probe ? 8 : 2048,
         ...(json ? { response_format: { type: 'json_object' } } : {}),
       }),
     });
@@ -450,7 +499,7 @@ const ADAPTERS = {
     return (data.choices?.[0]?.message?.content || '').trim();
   },
 
-  async anthropic({ apiKey, model, system, prompt, history, image, json, signal }) {
+  async anthropic({ apiKey, model, system, prompt, history, image, json, signal, probe }) {
     const messages = history.map((m) => ({ role: m.role, content: m.text }));
     const content = [];
     if (image) {
@@ -473,7 +522,7 @@ const ADAPTERS = {
         // Required for calls made straight from a browser.
         'anthropic-dangerous-direct-browser-access': 'true',
       },
-      body: JSON.stringify({ model, max_tokens: 2048, ...(system ? { system } : {}), messages }),
+      body: JSON.stringify({ model, max_tokens: probe ? 8 : 2048, ...(system ? { system } : {}), messages }),
     });
     if (!res.ok) await readError(res);
     const data = await res.json();

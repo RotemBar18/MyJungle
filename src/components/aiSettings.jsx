@@ -9,6 +9,7 @@ import {
   saveAiSettings,
   testKey,
   listModels,
+  findWorkingModel,
   AiError,
   AI_SETTINGS_EVENT,
   AI_BLOCKED_EVENT,
@@ -209,6 +210,7 @@ export function AiPanel() {
   const [modelsError, setModelsError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
+  const [probe, setProbe] = useState([]);
   const [blocked, setBlocked] = useState(() => readBlocked(ai.provider, ai.apiKey));
 
   const provider = PROVIDERS[ai.provider];
@@ -271,6 +273,32 @@ export function AiPanel() {
       await testKey();
       setResult({ ok: true });
       toast(t('ai.testOk'));
+    } catch (err) {
+      setResult({ ok: false, message: explain(err), detail: err?.detail });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /**
+   * Ask the key which model it will actually answer with. Whether a listed
+   * model is usable depends on retirement and free-tier allowance, neither of
+   * which the catalogue reveals — so try them.
+   */
+  const runFind = async () => {
+    setBusy(true);
+    setResult(null);
+    setProbe([]);
+    try {
+      const { model, tried } = await findWorkingModel((step) => setProbe((v) => [...v, step]));
+      setProbe(tried);
+      if (model) {
+        ai.update({ model });
+        setResult({ ok: true });
+        toast(t('ai.foundModel', { model }));
+      } else {
+        setResult({ ok: false, message: t('ai.noneWorked') });
+      }
     } catch (err) {
       setResult({ ok: false, message: explain(err), detail: err?.detail });
     } finally {
@@ -354,10 +382,29 @@ export function AiPanel() {
           <a className="btn sm" href={provider.keyUrl} target="_blank" rel="noreferrer noopener">
             {t('ai.getKey')} ↗
           </a>
-          <button className="btn sm primary" onClick={runTest} disabled={busy || !key || loadingModels}>
+          <button className="btn sm" onClick={runTest} disabled={busy || !key || loadingModels}>
             {busy ? t('ai.testing') : t('ai.test')}
           </button>
+          <button className="btn sm primary" onClick={runFind} disabled={busy || !key || loadingModels}>
+            {t('ai.findModel')}
+          </button>
         </div>
+
+        {probe.length > 0 && (
+          <div className="list" style={{ marginBlockEnd: 14 }}>
+            {probe.map((p) => (
+              <div className="list-row" key={p.model}>
+                <span className="lead" aria-hidden="true">
+                  {p.ok ? '✅' : '—'}
+                </span>
+                <span className="txt">
+                  <b style={{ direction: 'ltr' }}>{p.model}</b>
+                  {!p.ok && <small>{t(p.reason)}</small>}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
 
         {result && (
           <div

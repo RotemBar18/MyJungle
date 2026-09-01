@@ -163,6 +163,9 @@ export default {
     usageNote: 'Counted on this device only. Providers do not publish how much quota is left.',
     blocked: { quota: 'no free quota', retired: 'not available' },
     freeTierModels: 'On the free tier only some models carry an allowance — usually the 2.5 family. The rest are paid-only and will be refused.',
+    findModel: 'Find one that works',
+    foundModel: 'Using {model}',
+    noneWorked: 'None of the models this key lists would answer. The detail under each says why — usually no free-tier allowance, or retired for new keys.',
     showDetail: 'What the provider said',
     modelsFound: '{n} models available to this key',
 
