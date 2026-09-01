@@ -13,7 +13,6 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
-  getDocs,
   onSnapshot,
   orderBy,
   query,
@@ -441,14 +440,6 @@ export function StoreProvider({ children }) {
       uploadPhoto,
       saveProfile,
       signOut,
-      readAll: async () => {
-        const [ps, es] = await Promise.all([getDocs(J.plantsCol(jid)), getDocs(J.eventsCol(jid))]);
-        return {
-          jungle: { id: jid, name: jungle?.name || '' },
-          plants: ps.docs.map((d) => ({ id: d.id, ...d.data() })),
-          events: es.docs.map((d) => ({ id: d.id, ...d.data() })),
-        };
-      },
     }),
     [
       user, uid, ready, online, pending, profile, accessError, writeError, jid, jungle, myJungles, members, role,

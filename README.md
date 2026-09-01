@@ -4,8 +4,7 @@ A personal plant journal: every plant, cutting and pot in your home, with its fu
 history — watering, growth, health, repotting, propagation and photos — in one place.
 Hebrew and English, RTL and LTR, works offline, installs to your phone's home screen.
 
-Built from the original `plant_tracker.html` prototype; your 23 plants and their
-photos come across with a one-tap import.
+Built from the original `plant_tracker.html` prototype.
 
 ---
 
@@ -72,20 +71,8 @@ npm install
 npm run dev
 ```
 
-Open <http://localhost:5173>, sign in with Google, then go to
-**Settings → Import from the old tracker → Import my old collection**.
-That brings in the 23 plants. Running it twice changes nothing.
-
-**About the photos.** The import brings in the 23 plants with their names, species,
-care rules and notes — but no pictures. The original photos were one person's home
-and were only ever there to make the idea legible; they are not part of the product
-and are not shipped or committed. **Photos are yours to add**: tap 📷 on any plant,
-or attach one to any entry you log. The first photo a plant receives automatically
-becomes its main picture.
-
-If you *do* want to import with the original images, drop the `pXX.jpg` files into
-`public/seed/` before running the import, or use **"Or choose an exported file"** and
-pick the original `plant_tracker.html` — every photo is still embedded in it.
+Open <http://localhost:5173> and sign in with Google. Add your first plant with
+the **+** button.
 
 ### 6. Put it online
 
@@ -125,7 +112,6 @@ myJungle/
 ├── storage.rules              who can read/write which photo
 ├── .env.example               the keys to copy into .env
 ├── public/
-│   ├── seed/plants.json       the 23 plants from the old tracker (no photos)
 │   └── icon-*.png             home-screen icons
 └── src/
     ├── main.jsx               entry point
@@ -144,9 +130,7 @@ myJungle/
     │   ├── stats.js           per-plant history → status, intervals, issues
     │   ├── insights.js        evidence-based personal insights
     │   ├── format.js          dates, numbers, units, bidi helpers
-    │   ├── image.js           photo resizing before upload
-    │   ├── migrate.js         one-time import from the old tracker
-    │   └── backup.js          export / restore
+    │   └── image.js           photo resizing before upload
     ├── components/            sheets, forms, cards, chart, timeline pieces
     └── screens/               Home, Jungle, PlantDetail, PlantForm, Insights,
                                Settings, Auth, Join
@@ -171,9 +155,6 @@ in the history either way.
 
 ## Your data
 
-- **Export** — Settings → Download backup. One JSON file with every plant and every
-  history entry. Restoring it updates records with the same id rather than
-  duplicating them, so it is safe to restore twice.
 - **Deleting** — plants are archived by default (hidden, history kept). Real deletion
   asks you to type `DELETE` and warns if the plant is the mother of any cuttings.
 - **Photos** live in your project's Storage bucket, readable only by members of the
@@ -200,5 +181,5 @@ allowance — for one person's plant photos (a few hundred images of ~200 KB) th
 is realistically **$0** — but it does need a payment method on the account.
 
 Everything except photo upload works without it: plants, watering, growth, health,
-timeline, sharing, offline, export. Photo uploads report a clear failure rather than
+timeline, sharing and offline. Photo uploads report a clear failure rather than
 breaking the record.
