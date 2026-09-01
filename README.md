@@ -29,24 +29,14 @@ Everything below is in the Firebase console — the code needs no changes.
 
 ### 3. Point the app at your project
 
-```bash
-cp .env.example .env
-```
+Already done — `src/firebase.config.js` holds the project identifiers and is
+committed, so the app builds and runs anywhere with no environment variables to set.
+A Firebase web config is not a credential: it names the project the way a URL does,
+and it ends up in the JavaScript bundle of every Firebase web app regardless. The
+security rules are what protect the data.
 
-Fill `.env` with the values from step 1:
-
-```
-VITE_FB_API_KEY=AIza...
-VITE_FB_AUTH_DOMAIN=myjungle-xxxx.firebaseapp.com
-VITE_FB_PROJECT_ID=myjungle-xxxx
-VITE_FB_STORAGE_BUCKET=myjungle-xxxx.firebasestorage.app
-VITE_FB_MESSAGING_SENDER_ID=1234567890
-VITE_FB_APP_ID=1:1234:web:abcd
-VITE_USE_EMULATORS=false
-```
-
-`.env` is git-ignored. These keys are *not* secrets — they identify the project;
-what protects your data is the security rules in step 4.
+To point a fork at a *different* project, edit that file, or set the matching
+`VITE_FB_*` variables — they take precedence.
 
 ### 4. Deploy the rules (important — do this before you add real data)
 
