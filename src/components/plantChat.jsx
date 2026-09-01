@@ -9,6 +9,7 @@ import { logEntry, askPlant } from '../lib/plantAgent.js';
 import { prepareImage, ImageError } from '../lib/image.js';
 import { eventType } from '../lib/domain.js';
 import { photoErrorKey, photoErrorDetail } from '../lib/photoError.js';
+import { Thinking } from './thinking.jsx';
 
 /**
  * The conversational surface: one box that both records what you did and answers
@@ -33,6 +34,7 @@ export function PlantChat({ plant, stats }) {
   const [text, setText] = useState('');
   const [photo, setPhoto] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [mode, setMode] = useState('log');
   const fileRef = useRef(null);
   const endRef = useRef(null);
 
@@ -92,6 +94,7 @@ export function PlantChat({ plant, stats }) {
 
     try {
       const asking = message && !sentPhoto && looksLikeQuestion(message);
+      setMode(asking ? 'ask' : 'log');
 
       if (asking) {
         const answer = await askPlant({
@@ -201,11 +204,7 @@ export function PlantChat({ plant, stats }) {
 
         {busy && (
           <div className="bubble assistant">
-            <span className="dots" aria-label={t('ai.thinking')}>
-              <i />
-              <i />
-              <i />
-            </span>
+            <Thinking task={mode} />
           </div>
         )}
         <div ref={endRef} />

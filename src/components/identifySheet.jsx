@@ -5,6 +5,7 @@ import { useAi, useAiError } from './aiSettings.jsx';
 import { IconCamera } from './icons.jsx';
 import { identifyPlant, identityToPlant } from '../lib/plantAgent.js';
 import { prepareImage, ImageError } from '../lib/image.js';
+import { Thinking } from './thinking.jsx';
 
 /**
  * Camera-first plant creation: photograph it, and the species, light, watering
@@ -102,12 +103,7 @@ export function IdentifySheet({ open, onClose, onAccept, onManual }) {
           <img src={shot.preview} alt="" />
           {busy && (
             <div className="working">
-              <span className="dots" aria-hidden="true">
-                <i />
-                <i />
-                <i />
-              </span>
-              {t('ai.identifying')}
+              <Thinking task="identify" />
             </div>
           )}
         </div>

@@ -2031,12 +2031,12 @@ input[type='time'] {
   inset: 0;
   display: grid;
   place-items: center;
-  gap: 8px;
-  background: rgba(10, 20, 14, 0.55);
+  background: rgba(10, 20, 14, 0.62);
+  backdrop-filter: blur(3px);
+}
+.identify-shot .working .thinking {
   color: #fff;
-  font-size: 14px;
   font-weight: 600;
-  backdrop-filter: blur(2px);
 }
 .big-camera {
   inline-size: 100%;
@@ -2122,4 +2122,66 @@ input[type='time'] {
 .lb-nav svg {
   inline-size: 22px;
   block-size: 22px;
+}
+
+/* ---------------------------------------------------------- thinking */
+
+.thinking {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.thinking.inline {
+  font-size: 13px;
+}
+.thinking-text {
+  animation: fadeup 0.4s var(--ease);
+}
+@keyframes fadeup {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+/* Three leaves growing in turn — a plant-shaped wait rather than a spinner. */
+.sprout {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 3px;
+  block-size: 18px;
+  flex: none;
+}
+.sprout i {
+  inline-size: 5px;
+  block-size: 5px;
+  border-radius: 50% 50% 50% 0;
+  background: var(--leaf);
+  transform-origin: bottom left;
+  animation: grow 1.4s ease-in-out infinite;
+}
+.sprout i:nth-child(2) {
+  animation-delay: 0.18s;
+  background: var(--green);
+}
+.sprout i:nth-child(3) {
+  animation-delay: 0.36s;
+}
+@keyframes grow {
+  0%,
+  100% {
+    transform: scale(0.6) rotate(-45deg);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1.5) rotate(-45deg);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sprout i {
+    transform: scale(1.1) rotate(-45deg);
+    opacity: 0.8;
+  }
 }

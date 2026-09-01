@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useRef, useEffect, useCallback, us
 import { useI18n } from '../i18n/index.jsx';
 import { useStore } from '../data/store.jsx';
 import { TextField, SelectField, useToast, Bidi } from './ui.jsx';
+import { Thinking } from './thinking.jsx';
 import {
   PROVIDERS,
   PROVIDER_IDS,
@@ -389,6 +390,12 @@ export function AiPanel() {
             {t('ai.findModel')}
           </button>
         </div>
+
+        {busy && (
+          <div className="tile" style={{ marginBlockEnd: 14 }}>
+            <Thinking task="probe" inline />
+          </div>
+        )}
 
         {probe.length > 0 && (
           <div className="list" style={{ marginBlockEnd: 14 }}>

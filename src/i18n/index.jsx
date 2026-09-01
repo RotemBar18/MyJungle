@@ -43,7 +43,9 @@ function resolve(dict, path) {
     if (v == null) return undefined;
     v = v[part];
   }
-  return typeof v === 'string' ? v : undefined;
+  // Arrays are returned as-is: a few keys hold a sequence rather than a
+  // sentence (the AI waiting states), and they are still just copy.
+  return typeof v === 'string' || Array.isArray(v) ? v : undefined;
 }
 
 const I18nContext = createContext(null);
@@ -72,6 +74,7 @@ export function I18nProvider({ children }) {
         if (import.meta.env.DEV) console.warn('[i18n] missing key:', key);
         return key;
       }
+      if (Array.isArray(s)) return s;
       if (vars) {
         s = s.replace(/\{(\w+)\}/g, (m, k) => (vars[k] != null ? String(vars[k]) : m));
       }

@@ -166,6 +166,13 @@ export default {
     findModel: 'Find one that works',
     foundModel: 'Using {model}',
     noneWorked: 'None of the models this key lists would answer. The detail under each says why — usually no free-tier allowance, or retired for new keys.',
+    thinkingSteps: true,
+    steps: {
+      identify: ['Looking at your photo…', 'Working out the species…', 'Reading what it needs…', 'Almost there…'],
+      log: ['Reading what you wrote…', 'Working out what to record…', 'Writing it down…'],
+      ask: ['Reading this plant’s history…', 'Thinking it through…', 'Nearly there…'],
+      probe: ['Asking your key which models answer…', 'Trying the next one…'],
+    },
     showDetail: 'What the provider said',
     modelsFound: '{n} models available to this key',
 
