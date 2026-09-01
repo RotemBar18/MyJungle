@@ -9,7 +9,7 @@ import { logEntry, askPlant } from '../lib/plantAgent.js';
 import { prepareImage, ImageError } from '../lib/image.js';
 import { eventType } from '../lib/domain.js';
 import { photoErrorKey, photoErrorDetail } from '../lib/photoError.js';
-import { Thinking } from './thinking.jsx';
+import { Thinking, BusyVeil } from './thinking.jsx';
 
 /**
  * The conversational surface: one box that both records what you did and answers
@@ -161,6 +161,7 @@ export function PlantChat({ plant, stats }) {
 
   return (
     <div className="chat">
+      <BusyVeil show={busy} task={mode} />
       <div className="chat-log">
         {turns.length === 0 && (
           <div className="chat-empty">
@@ -237,6 +238,7 @@ export function PlantChat({ plant, stats }) {
         </button>
         <textarea
           rows={1}
+          disabled={busy}
           value={text}
           placeholder={t('ai.askPlaceholder')}
           onChange={(e) => setText(e.target.value)}

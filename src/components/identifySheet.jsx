@@ -5,7 +5,7 @@ import { useAi, useAiError } from './aiSettings.jsx';
 import { IconCamera } from './icons.jsx';
 import { identifyPlant, identityToPlant } from '../lib/plantAgent.js';
 import { prepareImage, ImageError } from '../lib/image.js';
-import { Thinking } from './thinking.jsx';
+import { Thinking, BusyVeil } from './thinking.jsx';
 
 /**
  * Camera-first plant creation: photograph it, and the species, light, watering
@@ -73,7 +73,7 @@ export function IdentifySheet({ open, onClose, onAccept, onManual }) {
   return (
     <Sheet
       open={open}
-      onClose={close}
+      onClose={busy ? () => {} : close}
       title={t('ai.identify')}
       footer={
         result ? (
@@ -88,6 +88,8 @@ export function IdentifySheet({ open, onClose, onAccept, onManual }) {
         ) : null
       }
     >
+      <BusyVeil show={busy} task="identify" />
+
       {!shot && (
         <button className="big-camera" onClick={() => fileRef.current?.click()}>
           <span className="ico" aria-hidden="true">

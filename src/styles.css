@@ -2159,29 +2159,53 @@ input[type='time'] {
   border-radius: 50% 50% 50% 0;
   background: var(--leaf);
   transform-origin: bottom left;
-  animation: grow 1.4s ease-in-out infinite;
+  transform: scale(0.7) rotate(-45deg);
+  /* The step itself is applied inline from React state, so it keeps moving
+     where a CSS keyframe would be flattened or throttled. This only smooths
+     between the states it is given. */
+  transition: transform 0.28s var(--ease), opacity 0.28s var(--ease);
 }
 .sprout i:nth-child(2) {
-  animation-delay: 0.18s;
   background: var(--green);
-}
-.sprout i:nth-child(3) {
-  animation-delay: 0.36s;
-}
-@keyframes grow {
-  0%,
-  100% {
-    transform: scale(0.6) rotate(-45deg);
-    opacity: 0.4;
-  }
-  40% {
-    transform: scale(1.5) rotate(-45deg);
-    opacity: 1;
-  }
 }
 @media (prefers-reduced-motion: reduce) {
   .sprout i {
-    transform: scale(1.1) rotate(-45deg);
-    opacity: 0.8;
+    transition: opacity 0.4s linear;
+  }
+}
+
+
+/* ---------------------------------------------------------- busy veil */
+
+.busy-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  backdrop-filter: blur(3px);
+  /* The point of this layer: swallow every tap until the call finishes. */
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: progress;
+  animation: fade 0.18s var(--ease);
+}
+.busy-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+  padding: 18px 20px;
+  max-inline-size: 320px;
+}
+.busy-card .thinking {
+  color: var(--ink);
+  font-weight: 600;
+}
+@media (prefers-reduced-motion: reduce) {
+  .busy-veil {
+    backdrop-filter: none;
   }
 }

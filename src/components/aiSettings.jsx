@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useRef, useEffect, useCallback, us
 import { useI18n } from '../i18n/index.jsx';
 import { useStore } from '../data/store.jsx';
 import { TextField, SelectField, useToast, Bidi } from './ui.jsx';
-import { Thinking } from './thinking.jsx';
+import { Thinking, BusyVeil } from './thinking.jsx';
 import {
   PROVIDERS,
   PROVIDER_IDS,
@@ -329,6 +329,7 @@ export function AiPanel() {
 
   return (
     <div className="card pad">
+      <BusyVeil show={busy} task="probe" />
       <p className="small muted">{t('ai.setupBody')}</p>
 
       <div style={{ marginBlockStart: 14 }}>
