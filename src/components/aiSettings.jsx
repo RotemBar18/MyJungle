@@ -1,7 +1,16 @@
 import { createContext, useContext, useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useI18n } from '../i18n/index.jsx';
 import { TextField, SelectField, useToast, Bidi } from './ui.jsx';
-import { PROVIDERS, PROVIDER_IDS, loadAiSettings, saveAiSettings, testKey, listModels, AiError } from '../lib/ai.js';
+import {
+  PROVIDERS,
+  PROVIDER_IDS,
+  loadAiSettings,
+  saveAiSettings,
+  testKey,
+  listModels,
+  AiError,
+  AI_SETTINGS_EVENT,
+} from '../lib/ai.js';
 
 /**
  * Where the AI key is configured, and the one place that knows whether an
@@ -33,6 +42,17 @@ export function AiProvider({ children }) {
     return next;
   }, []);
 
+  // `chat()` can switch the model on its own when a provider retires one.
+  useEffect(() => {
+    const sync = () => {
+      const fresh = loadAiSettings();
+      current.current = fresh;
+      setSettings(fresh);
+    };
+    window.addEventListener(AI_SETTINGS_EVENT, sync);
+    return () => window.removeEventListener(AI_SETTINGS_EVENT, sync);
+  }, []);
+
   const value = useMemo(
     () => ({ ...settings, ready: Boolean(settings.apiKey.trim()), update }),
     [settings, update],
@@ -59,6 +79,33 @@ export function useAiError() {
     },
     [t],
   );
+}
+
+/**
+ * Which model to land on when the saved one will not do.
+ *
+ * A provider's catalogue is ordered alphabetically and contains retired
+ * entries, so "the first one" and "the one matching our default" are both
+ * wrong. Prefer a rolling alias where the provider offers one, then the highest
+ * version number, so this does not need revisiting every release.
+ */
+const versionOf = (id) => {
+  const m = id.match(/(\d+)(?:\.(\d+))?/);
+  return m ? Number(m[1]) * 100 + Number(m[2] || 0) : 0;
+};
+
+function preferredModel(providerId, list, fallback) {
+  if (!list.length) return fallback;
+  const newest = (re) => list.filter((m) => re.test(m)).sort((a, b) => versionOf(b) - versionOf(a))[0];
+  if (providerId === 'gemini')
+    return (
+      list.find((m) => m === 'gemini-flash-latest') ||
+      newest(/^gemini-[\d.]+-flash$/) ||
+      newest(/flash/) ||
+      list[0]
+    );
+  if (providerId === 'openai') return list.find((m) => m === 'gpt-5') || newest(/^gpt-\d/) || list[0];
+  return list.find((m) => m.startsWith('claude-opus')) || newest(/^claude/) || list[0];
 }
 
 /** Raw provider text behind a disclosure — this app cannot diagnose keys for you. */
@@ -122,12 +169,7 @@ export function AiPanel() {
         if (!alive) return;
         setModels(available);
         if (available.length && !available.includes(ai.model)) {
-          ai.update({
-            model:
-              available.find((m) => m === provider.defaultModel) ||
-              available.find((m) => /flash|mini|haiku/i.test(m)) ||
-              available[0],
-          });
+          ai.update({ model: preferredModel(ai.provider, available, ai.model) });
         }
       } catch (err) {
         if (alive) {

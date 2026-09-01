@@ -22,7 +22,7 @@ export const PROVIDERS = {
     id: 'gemini',
     label: 'Google Gemini',
     free: true,
-    defaultModel: 'gemini-2.5-flash',
+    defaultModel: 'gemini-flash-latest',
     keyUrl: 'https://aistudio.google.com/apikey',
     keyHint: 'AIza…',
   },
@@ -62,6 +62,8 @@ export function loadAiSettings() {
   }
 }
 
+export const AI_SETTINGS_EVENT = 'myjungle:ai-settings';
+
 export function saveAiSettings(s) {
   try {
     localStorage.setItem(
@@ -71,6 +73,9 @@ export function saveAiSettings(s) {
   } catch {
     /* private browsing — the key simply will not persist */
   }
+  // Lets the React layer notice a change made from outside it (see the retry in
+  // `chat()`), so the settings screen never shows a model the app stopped using.
+  window.dispatchEvent(new CustomEvent(AI_SETTINGS_EVENT, { detail: s }));
 }
 
 export const hasAiKey = () => Boolean(loadAiSettings().apiKey.trim());
@@ -81,7 +86,16 @@ export class AiError extends Error {
     super(detail || key);
     this.key = key;
     this.detail = detail;
+    // Providers that retire a model usually name its replacement in the error.
+    // Carrying that out means the app can heal itself instead of asking the
+    // owner to work out which of thirty-five models to pick.
+    this.suggestedModel = suggestedModel(detail);
   }
+}
+
+function suggestedModel(detail = '') {
+  const m = String(detail).match(/use\s+(?:models\/)?([a-z0-9][\w.-]{3,60})/i);
+  return m ? m[1].replace(/[.,]$/, '') : null;
 }
 
 /**
@@ -95,8 +109,9 @@ export class AiError extends Error {
  * @param {boolean} opts.json       ask the provider for a JSON object back
  * @returns {Promise<string>} raw text (JSON string when `json` is set)
  */
-export async function chat({ system, prompt, history = [], image, json = false, signal } = {}) {
-  const { provider, apiKey, model } = loadAiSettings();
+export async function chat({ system, prompt, history = [], image, json = false, signal, _retried } = {}) {
+  const settings = loadAiSettings();
+  const { provider, apiKey, model } = settings;
   if (!apiKey.trim()) throw new AiError('ai.errors.noKey');
 
   const adapter = ADAPTERS[provider];
@@ -106,6 +121,13 @@ export async function chat({ system, prompt, history = [], image, json = false, 
     if (!text) throw new AiError('ai.errors.empty');
     return text;
   } catch (err) {
+    // Providers retire models. When one names its replacement, switch to it and
+    // try again rather than handing the owner a dead end — once only, so a
+    // provider that keeps redirecting cannot loop.
+    if (err instanceof AiError && err.suggestedModel && err.suggestedModel !== model && !_retried) {
+      saveAiSettings({ ...settings, model: err.suggestedModel });
+      return chat({ system, prompt, history, image, json, signal, _retried: true });
+    }
     if (err instanceof AiError) throw err;
     if (err.name === 'AbortError') throw new AiError('ai.errors.aborted');
     // A failed fetch with no status is almost always the network or a CORS
@@ -179,7 +201,14 @@ export async function listModels() {
     return (data.models || [])
       .filter((m) => (m.supportedGenerationMethods || []).includes('generateContent'))
       .map((m) => String(m.name).replace(/^models\//, ''))
-      .filter((id) => !/embedding|aqa|imagen|veo|tts/i.test(id))
+      // The catalogue also carries image, music, speech, robotics and research
+      // models that cannot answer a chat turn about a plant.
+      .filter(
+        (id) =>
+          !/embedding|aqa|imagen|veo|tts|image|lyria|banana|robotics|transcribe|computer-use|deep-research|antigravity|gemma/i.test(
+            id,
+          ),
+      )
       .sort();
   }
 
