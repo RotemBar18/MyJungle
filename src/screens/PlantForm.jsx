@@ -29,6 +29,7 @@ import { emptyPlant } from '../data/model.js';
 import { IdentifySheet } from '../components/identifySheet.jsx';
 import { useAi } from '../components/aiSettings.jsx';
 import { isoDate } from '../lib/format.js';
+import { photoErrorKey, photoErrorDetail } from '../lib/photoError.js';
 
 export default function PlantForm() {
   const { id } = useParams();
@@ -68,9 +69,10 @@ export default function PlantForm() {
       if (photo[0]?.blob) {
         try {
           photoValue = await store.uploadPhoto(targetId, photo[0].blob, { width: photo[0].w, height: photo[0].h });
-        } catch {
-          // The profile is worth saving even if the photo could not go up.
-          toast(t('gallery.uploadFailedBody'), { type: 'error' });
+        } catch (err) {
+          // The profile is worth saving even if the photo could not go up — but
+          // say why, or the owner has no way to fix it.
+          toast(`${t(photoErrorKey(err))} ${photoErrorDetail(err)}`, { type: 'error' });
         }
       } else if (photo.length === 0) {
         photoValue = null;

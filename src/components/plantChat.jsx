@@ -8,6 +8,7 @@ import { IconCamera, IconClose } from './icons.jsx';
 import { logEntry, askPlant } from '../lib/plantAgent.js';
 import { prepareImage, ImageError } from '../lib/image.js';
 import { eventType } from '../lib/domain.js';
+import { photoErrorKey, photoErrorDetail } from '../lib/photoError.js';
 
 /**
  * The conversational surface: one box that both records what you did and answers
@@ -116,8 +117,8 @@ export function PlantChat({ plant, stats }) {
         if (sentPhoto) {
           try {
             photos = [await store.uploadPhoto(plant.id, sentPhoto.blob)];
-          } catch {
-            toast(t('gallery.uploadFailedBody'), { type: 'error' });
+          } catch (err) {
+            toast(`${t(photoErrorKey(err))} ${photoErrorDetail(err)}`, { type: 'error' });
           }
         }
 

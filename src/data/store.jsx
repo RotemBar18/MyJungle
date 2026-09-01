@@ -358,9 +358,21 @@ export function StoreProvider({ children }) {
       }
       const path = `jungles/${jid}/plants/${plantId}/${newId('photos')}.jpg`;
       const r = sref(storage, path);
-      await uploadBytes(r, blob, { contentType: 'image/jpeg', cacheControl: 'public,max-age=31536000' });
-      const url = await getDownloadURL(r);
-      return { url, path, w: width, h: height };
+      try {
+        await uploadBytes(r, blob, { contentType: 'image/jpeg', cacheControl: 'public,max-age=31536000' });
+        const url = await getDownloadURL(r);
+        return { url, path, w: width, h: height };
+      } catch (err) {
+        // Photo failures used to surface as a generic "you are offline", which
+        // is wrong for the two causes that actually happen: a bucket without
+        // CORS for this origin, and rules that reject the write. Keep the real
+        // code and message so the UI can say which.
+        console.error('photo upload failed', { path, code: err?.code, message: err?.message }, err);
+        const e = new Error(err?.message || 'upload failed');
+        e.code = err?.code || 'storage/unknown';
+        e.path = path;
+        throw e;
+      }
     },
     [jid, newId],
   );
