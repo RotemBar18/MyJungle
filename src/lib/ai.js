@@ -139,8 +139,18 @@ async function readError(res) {
   // merely mentioned the word — including key problems, whose URLs contain
   // "models/". Only a 404, or a message that explicitly says the model was not
   // found, counts as a bad model name.
-  if (res.status === 401 || res.status === 403) throw new AiError('ai.errors.badKey', detail);
-  if (res.status === 429) throw new AiError('ai.errors.rateLimit', detail);
+  // Google answers 400 (not 401/403) for a rejected key, so the reason has to be
+  // read out of the body rather than inferred from the status alone.
+  if (
+    res.status === 401 ||
+    res.status === 403 ||
+    /api key not valid|api_key_invalid|invalid api key|incorrect api key|permission denied/i.test(detail)
+  )
+    throw new AiError('ai.errors.badKey', detail);
+  if (res.status === 429 || /quota|rate limit|resource_exhausted/i.test(detail))
+    throw new AiError('ai.errors.rateLimit', detail);
+  if (/has not been used in project|is disabled|SERVICE_DISABLED/i.test(detail))
+    throw new AiError('ai.errors.apiDisabled', detail);
   if (res.status === 404 || /model .*(not found|does not exist|not supported)|unknown model|invalid model/i.test(detail))
     throw new AiError('ai.errors.badModel', detail);
   if (res.status >= 500) throw new AiError('ai.errors.providerDown', detail);

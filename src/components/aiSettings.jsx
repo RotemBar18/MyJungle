@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import { createContext, useContext, useState, useRef, useCallback, useMemo } from 'react';
 import { useI18n } from '../i18n/index.jsx';
 import { TextField, SelectField, useToast, Bidi } from './ui.jsx';
 import { PROVIDERS, PROVIDER_IDS, loadAiSettings, saveAiSettings, testKey, listModels, AiError } from '../lib/ai.js';
@@ -11,20 +11,26 @@ import { PROVIDERS, PROVIDER_IDS, loadAiSettings, saveAiSettings, testKey, listM
 const AiContext = createContext(null);
 
 export function AiProvider({ children }) {
-  const [settings, setSettings] = useState(loadAiSettings);
+  // The ref, not the state, is the live value. A React state updater runs when
+  // React decides to, so persisting from inside one meant `chat()` — which reads
+  // localStorage — could still see the previous model on the very next line.
+  // Writing through the ref makes an update visible synchronously.
+  const current = useRef(loadAiSettings());
+  const [settings, setSettings] = useState(current.current);
 
   const update = useCallback((patch) => {
-    setSettings((prev) => {
-      const next = { ...prev, ...patch };
-      // Switching provider carries the old provider's model name across, which
-      // would always fail; reset it unless the model itself was what changed.
-      if (patch.provider && patch.provider !== prev.provider && !patch.model) {
-        next.model = PROVIDERS[patch.provider].defaultModel;
-        next.apiKey = '';
-      }
-      saveAiSettings(next);
-      return next;
-    });
+    const prev = current.current;
+    const next = { ...prev, ...patch };
+    // Switching provider carries the old provider's model name across, which
+    // would always fail; reset it unless the model itself was what changed.
+    if (patch.provider && patch.provider !== prev.provider && !patch.model) {
+      next.model = PROVIDERS[patch.provider].defaultModel;
+      next.apiKey = '';
+    }
+    current.current = next;
+    saveAiSettings(next);
+    setSettings(next);
+    return next;
   }, []);
 
   const value = useMemo(
@@ -76,6 +82,7 @@ export function AiPanel() {
     try {
       const available = await listModels();
       setModels(available);
+      if (!available.length) throw new AiError('ai.errors.noModels');
       // If the saved model is not on the key's list, move to a sensible one from
       // the list itself rather than leaving a name that cannot work.
       let model = ai.model;

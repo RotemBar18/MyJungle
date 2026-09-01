@@ -189,6 +189,8 @@ export default {
     errors: {
       noKey: 'No API key yet — add one in Settings.',
       badKey: 'That key was rejected. Check it in Settings.',
+      apiDisabled: 'The Generative Language API is not enabled on the Google project this key belongs to. Open the link in the error detail to switch it on.',
+      noModels: 'That key works, but no usable models came back for it.',
       rateLimit: 'Rate limit reached. Wait a moment, or switch provider in Settings.',
       badModel: 'That model name was not accepted. Try the default one in Settings.',
       providerDown: 'The provider is having trouble. Try again shortly.',
