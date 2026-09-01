@@ -195,20 +195,32 @@ function NoAccess({ jungles, onPick }) {
 
 function NotConfigured() {
   const { t } = useI18n();
+  // Vite inlines VITE_* variables at build time, so a hosted build that was
+  // compiled without them cannot pick them up later — the fix is always
+  // "set them, then build again", which is what this screen has to say.
+  const hosted = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
   return (
     <div className="auth-wrap">
       <div className="auth-card">
         <Logo size={48} className="logo" />
         <h1>{t('auth.notConfigured')}</h1>
-        <p className="sub">{t('auth.notConfiguredBody')}</p>
+        <p className="sub">{hosted ? t('auth.notConfiguredHosted') : t('auth.notConfiguredBody')}</p>
         <pre
-          className="tile small"
-          style={{ overflowX: 'auto', direction: 'ltr', textAlign: 'left' }}
+          className="tile tiny"
+          style={{ overflowX: 'auto', direction: 'ltr', textAlign: 'left', lineHeight: 1.7 }}
         >
-{`cp .env.example .env
-# fill VITE_FB_* from Firebase console
-npm run dev`}
+{`VITE_FB_API_KEY
+VITE_FB_AUTH_DOMAIN
+VITE_FB_PROJECT_ID
+VITE_FB_STORAGE_BUCKET
+VITE_FB_MESSAGING_SENDER_ID
+VITE_FB_APP_ID`}
         </pre>
+        {hosted && (
+          <p className="tiny muted" style={{ marginBlockStart: 12 }}>
+            {t('auth.notConfiguredRebuild')}
+          </p>
+        )}
       </div>
     </div>
   );

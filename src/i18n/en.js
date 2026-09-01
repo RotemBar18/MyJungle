@@ -169,6 +169,8 @@ export default {
       'auth/internal-error': 'Google could not complete the sign-in. Please try again.',
       default: 'Sign-in failed. Please try again.',
     },
+    notConfiguredHosted: 'This build went out without its Firebase keys. Add these as environment variables in your hosting provider:',
+    notConfiguredRebuild: 'They are baked in when the site is built, so redeploy after saving them — changing them alone will not fix this page.',
     notConfigured: 'Firebase is not configured yet',
     notConfiguredBody:
       'Copy .env.example to .env, fill in your Firebase project keys and restart the dev server. See README.md.',

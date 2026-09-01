@@ -170,6 +170,8 @@ export default {
       'auth/internal-error': 'ל־Google לא הצליחה הכניסה. אפשר לנסות שוב.',
       default: 'הכניסה נכשלה. אפשר לנסות שוב.',
     },
+    notConfiguredHosted: 'הגרסה הזו נבנתה בלי מפתחות ה־Firebase. צריך להוסיף אותם כמשתני סביבה אצל ספק האחסון:',
+    notConfiguredRebuild: 'המפתחות נצרבים בזמן הבנייה, ולכן צריך לפרוס מחדש אחרי השמירה — עדכון בלבד לא יתקן את המסך הזה.',
     notConfigured: 'Firebase עדיין לא מוגדר',
     notConfiguredBody:
       'צריך להעתיק את הקובץ ‎.env.example אל ‎.env, למלא את מפתחות הפרויקט ולהריץ מחדש. הפרטים ב־README.md.',
