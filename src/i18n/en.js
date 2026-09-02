@@ -173,6 +173,7 @@ export default {
       ask: ['Reading this plant’s history…', 'Thinking it through…', 'Nearly there…'],
       probe: ['Asking your key which models answer…', 'Trying the next one…'],
     },
+    outOfScope: 'I can only help with this plant.',
     showDetail: 'What the provider said',
     modelsFound: '{n} models available to this key',
 

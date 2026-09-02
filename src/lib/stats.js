@@ -4,6 +4,8 @@ import { isWaterMedium } from '../data/model.js';
 
 /** Substrate readings that mean "there was still water in there". */
 const MOIST = new Set(['slightlyMoist', 'moist', 'wet']);
+/** Readings that mean the plant is ready for water now. */
+const DRY = new Set(['dry', 'mostlyDry']);
 
 export const median = (a) => {
   if (!a.length) return null;
@@ -59,16 +61,24 @@ export function plantStats(plant, events = []) {
     : configured;
   if (maxDays <= minDays) maxDays = minDays + 1;
 
-  // A check that found the substrate still moist resets the clock, but only
-  // for a shorter "look again soon" window.
-  const moistCheck =
-    lastCheck &&
-    MOIST.has(lastCheck.data?.soil) &&
-    (!lastWater || lastCheck.date > lastWater.date)
-      ? lastCheck
-      : null;
-  const anchor = moistCheck ? moistCheck.date : lastWater ? lastWater.date : null;
-  const win = moistCheck
+  // Looking at a plant is care, and it moves the clock — whatever it found.
+  //
+  // This used to require a substrate reading, so a check recorded without one
+  // counted for nothing: the plant read as though it had never been touched and
+  // stayed on the list the owner had just cleared by hand. What the reading
+  // changes is the verdict, not whether the check happened at all.
+  const checkedSince =
+    lastCheck && (!lastWater || lastCheck.date > lastWater.date) ? lastCheck : null;
+  const checkedSoil = checkedSince?.data?.soil;
+  // Found dry and not watered: it needs water now, so say so rather than
+  // restarting the clock on the strength of having looked.
+  const dryCheck = checkedSince && DRY.has(checkedSoil) ? checkedSince : null;
+  // Found moist, or not described — someone who found it dry would have watered
+  // it, so an unqualified check is treated as "not ready yet".
+  const restingCheck = checkedSince && !dryCheck ? checkedSince : null;
+
+  const anchor = restingCheck ? restingCheck.date : lastWater ? lastWater.date : dryCheck ? dryCheck.date : null;
+  const win = restingCheck
     ? [Math.max(2, Math.round(minDays * 0.45)), Math.max(3, Math.round(minDays * 0.8))]
     : [minDays, maxDays];
 
@@ -76,7 +86,9 @@ export function plantStats(plant, events = []) {
   const daysSinceAnchor = anchor ? daysBetween(anchor, now) : null;
 
   let state = 'unknown';
-  if (anchor != null && daysSinceAnchor != null) {
+  if (dryCheck) {
+    state = 'due';
+  } else if (anchor != null && daysSinceAnchor != null) {
     if (daysSinceAnchor >= win[1]) state = 'due';
     else if (daysSinceAnchor >= win[0]) state = 'check';
     else state = 'fine';
@@ -157,6 +169,7 @@ export function plantStats(plant, events = []) {
     recentInterval: intervals.length >= 3 ? Math.round(median(intervals.slice(-3)) * 10) / 10 : null,
     windowSource,
     window: win,
+    lastCheckSoil: checkedSoil || null,
     configuredWindow: configured,
     lastWater,
     lastCheck,

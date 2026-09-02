@@ -103,6 +103,7 @@ export function PlantChat({ plant, stats }) {
           question: message,
           history: turns.filter((x) => !x.events).map((x) => ({ role: x.role, text: x.text })),
           lang,
+          refusal: t('ai.outOfScope'),
         });
         setTurns((v) => [...v, { role: 'assistant', text: answer }]);
       } else {
